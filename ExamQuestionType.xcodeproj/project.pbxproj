@@ -13,6 +13,14 @@
 		3961E0C02C16F4C6009F13C4 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 3961E0BF2C16F4C6009F13C4 /* Base */; };
 		3961E0C22C16F4C8009F13C4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3961E0C12C16F4C8009F13C4 /* Assets.xcassets */; };
 		3961E0C52C16F4C8009F13C4 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 3961E0C42C16F4C8009F13C4 /* Base */; };
+		3961E0D12C16F79A009F13C4 /* EQTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E0D02C16F79A009F13C4 /* EQTableCell.swift */; };
+		3961E1072C16FF64009F13C4 /* TFHpple.m in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1012C16FF64009F13C4 /* TFHpple.m */; };
+		3961E1082C16FF64009F13C4 /* TFHppleElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1022C16FF64009F13C4 /* TFHppleElement.m */; };
+		3961E1092C16FF64009F13C4 /* XPathQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1052C16FF64009F13C4 /* XPathQuery.m */; };
+		3961E10F2C17113C009F13C4 /* EQTableModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E10E2C17113C009F13C4 /* EQTableModel.swift */; };
+		3961E1112C171147009F13C4 /* EQTableHeadModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1102C171147009F13C4 /* EQTableHeadModel.swift */; };
+		3961E1132C17115F009F13C4 /* EQTableTrModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1122C17115F009F13C4 /* EQTableTrModel.swift */; };
+		3961E1152C171166009F13C4 /* EQTableTdModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1142C171166009F13C4 /* EQTableTdModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +32,18 @@
 		3961E0C12C16F4C8009F13C4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3961E0C42C16F4C8009F13C4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		3961E0C62C16F4C8009F13C4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		3961E0D02C16F79A009F13C4 /* EQTableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EQTableCell.swift; sourceTree = "<group>"; };
+		3961E1002C16FF64009F13C4 /* ExamQuestionType-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ExamQuestionType-Bridging-Header.h"; sourceTree = "<group>"; };
+		3961E1012C16FF64009F13C4 /* TFHpple.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TFHpple.m; sourceTree = "<group>"; };
+		3961E1022C16FF64009F13C4 /* TFHppleElement.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TFHppleElement.m; sourceTree = "<group>"; };
+		3961E1032C16FF64009F13C4 /* XPathQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XPathQuery.h; sourceTree = "<group>"; };
+		3961E1042C16FF64009F13C4 /* TFHppleElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TFHppleElement.h; sourceTree = "<group>"; };
+		3961E1052C16FF64009F13C4 /* XPathQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XPathQuery.m; sourceTree = "<group>"; };
+		3961E1062C16FF64009F13C4 /* TFHpple.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TFHpple.h; sourceTree = "<group>"; };
+		3961E10E2C17113C009F13C4 /* EQTableModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EQTableModel.swift; sourceTree = "<group>"; };
+		3961E1102C171147009F13C4 /* EQTableHeadModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EQTableHeadModel.swift; sourceTree = "<group>"; };
+		3961E1122C17115F009F13C4 /* EQTableTrModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EQTableTrModel.swift; sourceTree = "<group>"; };
+		3961E1142C171166009F13C4 /* EQTableTdModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EQTableTdModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +62,7 @@
 			children = (
 				3961E0B72C16F4C6009F13C4 /* ExamQuestionType */,
 				3961E0B62C16F4C6009F13C4 /* Products */,
+				3961E10A2C1702E6009F13C4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -56,6 +77,8 @@
 		3961E0B72C16F4C6009F13C4 /* ExamQuestionType */ = {
 			isa = PBXGroup;
 			children = (
+				3961E10D2C171129009F13C4 /* TableModel */,
+				3961E0FF2C16FF59009F13C4 /* Hpple */,
 				3961E0B82C16F4C6009F13C4 /* AppDelegate.swift */,
 				3961E0BA2C16F4C6009F13C4 /* SceneDelegate.swift */,
 				3961E0BC2C16F4C6009F13C4 /* ViewController.swift */,
@@ -63,8 +86,41 @@
 				3961E0C12C16F4C8009F13C4 /* Assets.xcassets */,
 				3961E0C32C16F4C8009F13C4 /* LaunchScreen.storyboard */,
 				3961E0C62C16F4C8009F13C4 /* Info.plist */,
+				3961E0D02C16F79A009F13C4 /* EQTableCell.swift */,
+				3961E1002C16FF64009F13C4 /* ExamQuestionType-Bridging-Header.h */,
 			);
 			path = ExamQuestionType;
+			sourceTree = "<group>";
+		};
+		3961E0FF2C16FF59009F13C4 /* Hpple */ = {
+			isa = PBXGroup;
+			children = (
+				3961E1062C16FF64009F13C4 /* TFHpple.h */,
+				3961E1012C16FF64009F13C4 /* TFHpple.m */,
+				3961E1042C16FF64009F13C4 /* TFHppleElement.h */,
+				3961E1022C16FF64009F13C4 /* TFHppleElement.m */,
+				3961E1032C16FF64009F13C4 /* XPathQuery.h */,
+				3961E1052C16FF64009F13C4 /* XPathQuery.m */,
+			);
+			path = Hpple;
+			sourceTree = "<group>";
+		};
+		3961E10A2C1702E6009F13C4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3961E10D2C171129009F13C4 /* TableModel */ = {
+			isa = PBXGroup;
+			children = (
+				3961E10E2C17113C009F13C4 /* EQTableModel.swift */,
+				3961E1102C171147009F13C4 /* EQTableHeadModel.swift */,
+				3961E1122C17115F009F13C4 /* EQTableTrModel.swift */,
+				3961E1142C171166009F13C4 /* EQTableTdModel.swift */,
+			);
+			path = TableModel;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -99,6 +155,7 @@
 				TargetAttributes = {
 					3961E0B42C16F4C6009F13C4 = {
 						CreatedOnToolsVersion = 15.4;
+						LastSwiftMigration = 1540;
 					};
 				};
 			};
@@ -139,8 +196,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				3961E0BD2C16F4C6009F13C4 /* ViewController.swift in Sources */,
+				3961E1082C16FF64009F13C4 /* TFHppleElement.m in Sources */,
+				3961E1092C16FF64009F13C4 /* XPathQuery.m in Sources */,
+				3961E1072C16FF64009F13C4 /* TFHpple.m in Sources */,
 				3961E0B92C16F4C6009F13C4 /* AppDelegate.swift in Sources */,
+				3961E10F2C17113C009F13C4 /* EQTableModel.swift in Sources */,
 				3961E0BB2C16F4C6009F13C4 /* SceneDelegate.swift in Sources */,
+				3961E1112C171147009F13C4 /* EQTableHeadModel.swift in Sources */,
+				3961E0D12C16F79A009F13C4 /* EQTableCell.swift in Sources */,
+				3961E1152C171166009F13C4 /* EQTableTdModel.swift in Sources */,
+				3961E1132C17115F009F13C4 /* EQTableTrModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,6 +355,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = C6TTF7VT5L;
@@ -308,6 +374,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.HowardExplore.ExamQuestionType;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "ExamQuestionType/ExamQuestionType-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -318,6 +386,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = C6TTF7VT5L;
@@ -336,6 +405,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.HowardExplore.ExamQuestionType;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "ExamQuestionType/ExamQuestionType-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
