@@ -21,6 +21,7 @@
 		3961E1112C171147009F13C4 /* EQTableHeadModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1102C171147009F13C4 /* EQTableHeadModel.swift */; };
 		3961E1132C17115F009F13C4 /* EQTableTrModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1122C17115F009F13C4 /* EQTableTrModel.swift */; };
 		3961E1152C171166009F13C4 /* EQTableTdModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1142C171166009F13C4 /* EQTableTdModel.swift */; };
+		EB5785AD2C17F84400BF28A7 /* TableCollectionViewFlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5785AC2C17F84400BF28A7 /* TableCollectionViewFlowLayout.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 		3961E1102C171147009F13C4 /* EQTableHeadModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EQTableHeadModel.swift; sourceTree = "<group>"; };
 		3961E1122C17115F009F13C4 /* EQTableTrModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EQTableTrModel.swift; sourceTree = "<group>"; };
 		3961E1142C171166009F13C4 /* EQTableTdModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EQTableTdModel.swift; sourceTree = "<group>"; };
+		EB5785AC2C17F84400BF28A7 /* TableCollectionViewFlowLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TableCollectionViewFlowLayout.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,6 +90,7 @@
 				3961E0C62C16F4C8009F13C4 /* Info.plist */,
 				3961E0D02C16F79A009F13C4 /* EQTableCell.swift */,
 				3961E1002C16FF64009F13C4 /* ExamQuestionType-Bridging-Header.h */,
+				EB5785AC2C17F84400BF28A7 /* TableCollectionViewFlowLayout.swift */,
 			);
 			path = ExamQuestionType;
 			sourceTree = "<group>";
@@ -206,6 +209,7 @@
 				3961E0D12C16F79A009F13C4 /* EQTableCell.swift in Sources */,
 				3961E1152C171166009F13C4 /* EQTableTdModel.swift in Sources */,
 				3961E1132C17115F009F13C4 /* EQTableTrModel.swift in Sources */,
+				EB5785AD2C17F84400BF28A7 /* TableCollectionViewFlowLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -283,7 +287,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -340,7 +344,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -358,7 +362,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = C6TTF7VT5L;
+				DEVELOPMENT_TEAM = HEUN8RQNTQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ExamQuestionType/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -389,7 +393,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = C6TTF7VT5L;
+				DEVELOPMENT_TEAM = HEUN8RQNTQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ExamQuestionType/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

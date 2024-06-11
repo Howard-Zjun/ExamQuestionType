@@ -13,13 +13,13 @@ class EQTableTrModel: NSObject {
     let tdModelArr: [EQTableTdModel]
     
     init?(element: TFHppleElement) {
-        if element.tagName == "tr" {
+        if element.tagName != "tr" {
             return nil
         }
         var tdModelArr: [EQTableTdModel] = []
         for itemElement in (element.children as? [TFHppleElement]) ?? [] {
             if itemElement.tagName == "td" {
-                if let model = EQTableTdModel(element: itemElement, x: 0, y: 0) {
+                if let model = EQTableTdModel(element: itemElement) {
                     tdModelArr.append(model)
                 }
             }

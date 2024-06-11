@@ -17,10 +17,11 @@ class EQTableHeadModel: NSObject {
         }
         var trModelArr: [EQTableTrModel] = []
         for itemElement in (element.children as? [TFHppleElement]) ?? [] {
-            if itemElement.tagName == "tr" {
-                if let model = EQTableTrModel(element: itemElement) {
-                    trModelArr.append(model)
-                }
+            if itemElement.tagName != "tr" {
+                continue
+            }
+            if let model = EQTableTrModel(element: itemElement) {
+                trModelArr.append(model)
             }
         }
         if trModelArr.isEmpty {

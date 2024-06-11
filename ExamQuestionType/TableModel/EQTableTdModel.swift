@@ -20,27 +20,19 @@ class EQTableConfig: NSObject {
     var boardColor: UIColor
     
     var boardWidth: CGFloat
-     
-    var widthUnit: CGFloat
-    
-    var heightUnit: CGFloat
     
     init(font: UIFont = .systemFont(ofSize: 18),
          textColor: UIColor = .black,
          backgroundColor: UIColor = .white,
-         textAlignment: NSTextAlignment = .center,
+         textAlignment: NSTextAlignment = .left,
          boardColor: UIColor = .black,
-         boardWidth: CGFloat = 1,
-         widthUnit: CGFloat = 50,
-         heightUnit: CGFloat = 50) {
+         boardWidth: CGFloat = 1) {
         self.font = font
         self.textColor = textColor
         self.backgroundColor = backgroundColor
         self.textAlignment = textAlignment
         self.boardColor = boardColor
         self.boardWidth = boardWidth
-        self.widthUnit = widthUnit
-        self.heightUnit = heightUnit
     }
     
     static let contentModel: EQTableConfig = .init()
@@ -54,33 +46,9 @@ class EQTableTdModel: NSObject {
     
     var yNum: Int = 0
     
-    var x: CGFloat {
-        CGFloat(xNum) * configModel.widthUnit
-    }
+    var widthNum: Int
     
-    var y: CGFloat {
-        CGFloat(yNum) * configModel.heightUnit
-    }
-    
-    var origin: CGPoint {
-        .init(x: x, y: y)
-    }
-    
-    var widthNum: Int = 1
-    
-    var heightNum: Int = 1
-    
-    var width: CGFloat {
-        CGFloat(widthNum) * configModel.widthUnit
-    }
-    
-    var height: CGFloat {
-        CGFloat(heightNum) * configModel.heightUnit
-    }
-    
-    var size: CGSize {
-        .init(width: width, height: height)
-    }
+    var heightNum: Int
     
     var marginInset: UIEdgeInsets = .zero
     
@@ -91,17 +59,31 @@ class EQTableTdModel: NSObject {
     var configModel: EQTableConfig = .contentModel
     
     init?(element: TFHppleElement) {
-        if element.tagName == "td" {
+        if element.tagName != "td" {
             return nil
         }
         self.content = element.content
+        
         // 跨行
-        if let rowspan = element.attributes["rowspan"] as? Int {
-            heightNum = rowspan
+        var heightNum = element.attributes["rowspan"] as? Int
+        if heightNum == nil, let str = element.attributes["rowspan"] as? String {
+            heightNum = Int(str)
         }
+        if let heightNum = heightNum {
+            self.heightNum = heightNum
+        } else {
+            self.heightNum = 1
+        }
+        
         // 跨列
-        if let colspan = element.attributes["colspan"] as? Int {
-            widthNum = colspan
+        var widthNum = element.attributes["colspan"] as? Int
+        if widthNum == nil, let str = element.attributes["colspan"] as? String {
+            widthNum = Int(str)
+        }
+        if let widthNum = widthNum {
+            self.widthNum = widthNum
+        } else {
+            self.widthNum = 1
         }
     }
 }
