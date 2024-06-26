@@ -13,7 +13,7 @@ class QueLevel2: NSObject, Decodable {
     
     let voiceUrl: String?
     
-    let subLevel2: [QueLevel2]
+    let subLevel2: [QueLevel2]?
     
     var content: String?
     
@@ -25,7 +25,7 @@ class QueLevel2: NSObject, Decodable {
     
     let type: QueLevel2Type
     
-    let no: Int
+    let no: Int?
     
     let score: Int
     
@@ -46,13 +46,13 @@ class QueLevel2: NSObject, Decodable {
     }
         
     
-    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2], content: String?, correctAnswers: [String], userAnswers: [String], options: [String]?, type: QueLevel2Type, no: Int) {
+    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QueLevel2Type, no: Int?) {
         self.videoUrl = videoUrl
         self.voiceUrl = voiceUrl
         self.subLevel2 = subLevel2
         self.content = content
         self.correctAnswers = correctAnswers
-        self.userAnswers = userAnswers
+        self.userAnswers = []
         self.options = options
         self.type = type
         self.no = no
@@ -74,10 +74,21 @@ extension QueLevel2 {
         case Select
         case Record
         case Sort
+        case Comprehensive
     }
 }
 
 extension QueLevel2 {
     
-    static var
+    static var closeModel: QueLevel2 {
+        
+    }
+    
+    static var readComprehensionSubModel: QueLevel2 {
+        
+    }
+    
+    static var essayFillBlankSubModel: QueLevel2 {
+        
+    }
 }

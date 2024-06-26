@@ -23,17 +23,26 @@ class QueContentSelectModel: NSObject, QueContentModel {
     
     var resultAttributed: NSMutableAttributedString
     
-    let paragraphStyle: NSParagraphStyle
-    
     // 选项
     let options: [String]
     
     var focunsIndex: Int? {
         didSet {
             if let focunsIndex = oldValue, focunsIndex < fillBlankAttrStrArr.count {
+                if getStrAnswer(index: focunsIndex) == nil { // 聚焦在没有答案的填空消失，添加缺省图标
+                    let newFillBlankStr = emptyFillBlankAttrStr(index: focunsIndex)
+                    let oldFillBlankStr = fillBlankAttrStrArr[focunsIndex]
+                    let itemInAllIndex = (allAttrStrArr as NSArray).index(of: oldFillBlankStr)
+                    fillBlankAttrStrArr[focunsIndex] = newFillBlankStr
+                    allAttrStrArr[itemInAllIndex] = newFillBlankStr
+                }
                 fillBlankAttrStrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor.black, range: .init(location: 0, length: fillBlankAttrStrArr[focunsIndex].length))
             }
             if let focunsIndex = focunsIndex, focunsIndex < fillBlankAttrStrArr.count  {
+                if getStrAnswer(index: focunsIndex) == nil { // 聚焦在没有答案的填空出现，清掉缺省图标
+                    fillBlankAttrStrArr[focunsIndex].replaceCharacters(in: .init(location: 1, length: 1), with: "⌘")
+                    fillBlankAttrStrArr[focunsIndex].addAttribute(.foregroundColor, value: UIColor.clear, range: .init(location: 0, length: fillBlankAttrStrArr[focunsIndex].length))
+                }
                 fillBlankAttrStrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor.blue, range: .init(location: 0, length: fillBlankAttrStrArr[focunsIndex].length))
             }
             makeResultAttr()
@@ -46,11 +55,7 @@ class QueContentSelectModel: NSObject, QueContentModel {
         }
         self.queLevel2 = queLevel2
         let originContent = HTMLTranslate.stripBlk(html: queLevel2?.content ?? "")
-        let style = NSMutableParagraphStyle()
-        style.lineSpacing = 10
-        style.paragraphSpacing = 10
         
-        self.paragraphStyle = style
         self.options = options
         self.allAttrStrArr = []
         self.fillBlankAttrStrArr = []
@@ -80,7 +85,6 @@ class QueContentSelectModel: NSObject, QueContentModel {
                         .link : "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)",
                         .font : UIFont.systemFont(ofSize: 18),
                         .foregroundColor : UIColor.clear,
-                        .paragraphStyle : paragraphStyle,
                     ])
                     fillBlankAttrStr.addAttribute(.foregroundColor, value: UIColor.blue, range: .init(location: 1, length: 1))
                 } else {
@@ -92,7 +96,6 @@ class QueContentSelectModel: NSObject, QueContentModel {
             allAttrStrArr.append(.init(string: itemStr, attributes: [
                 .font : UIFont.systemFont(ofSize: 18),
                 .foregroundColor : UIColor.black,
-                .paragraphStyle : style
             ]))
         }
         for itemAttrStr in allAttrStrArr {
@@ -136,19 +139,22 @@ class QueContentSelectModel: NSObject, QueContentModel {
         let ret = NSMutableAttributedString()
         ret.append(.init(string: "⌘"))
         
-        let attachment = NSTextAttachment(image: .init(named: "blank_icon_edit")!)
-        attachment.bounds = .init(x: 0, y: 0, width: 18, height: 18)
-        ret.append(.init(attachment: attachment))
+        if isFocus {
+            ret.append(.init(string: "⌘"))
+        } else {
+            let attachment = NSTextAttachment(image: .init(named: "blank_icon_edit")!)
+            attachment.bounds = .init(x: 0, y: 0, width: 18, height: 18)
+            ret.append(.init(attachment: attachment))
+        }
         
         ret.append(.init(string: "⌘"))
         
         ret.addAttributes([
             .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-            .underlineColor : UIColor.black,
-            .link : "\(snFillBlankURLPrefix)\(snSeparate)\(index)",
+            .underlineColor : isFocus ? UIColor(hex: "2F81FB") : UIColor.black,
+            .link : "\(fillBlankURLPrefix)\(index)",
             .font : UIFont.systemFont(ofSize: 18),
             .foregroundColor : UIColor.clear,
-            .paragraphStyle : paragraphStyle,
         ], range: .init(location: 0, length: ret.length))
         return ret
     }
@@ -159,6 +165,10 @@ class QueContentSelectModel: NSObject, QueContentModel {
             resultAttributed.append(itemAttrStr)
         }
         resultAttributed.addAttribute(.baselineOffset, value: NSNumber(value: 5), range: .init(location: 0, length: resultAttributed.length))
+        let style = NSMutableParagraphStyle()
+        style.lineSpacing = 5
+        style.paragraphSpacing = 5
+        resultAttributed.addAttribute(.paragraphStyle, value: style, range: .init(location: 0, length: resultAttributed.length))
         self.resultAttributed = resultAttributed
     }
 }
