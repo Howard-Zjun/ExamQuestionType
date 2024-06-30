@@ -22,14 +22,14 @@ class QueContentTitleCell: UITableViewCell {
         gradientImgV.layer.cornerRadius = 16
         gradientImgV.layer.masksToBounds = true
         gradientImgV.contentMode = .scaleToFill
-        gradientImgV.image = backgroundGradient([UIColor(hex: "D8ECFF"),UIColor(hex: "FFFFFF")])
+        gradientImgV.image = backgroundGradient([UIColor(hex: 0xD8ECFF),UIColor(hex: 0xFFFFFF)])
         return gradientImgV
     }()
     
     lazy var titleLab: UILabel = {
         let titleLab = UILabel(frame: .init(x: 18, y: 5, width: contentView.kwidth - 36, height: 22))
         titleLab.font = .systemFont(ofSize: 16, weight: .bold)
-        titleLab.textColor = .init(hex: "333333")
+        titleLab.textColor = .init(hex: 0x333333)
         titleLab.numberOfLines = 0
         titleLab.contentMode = .left
         titleLab.lineBreakMode = .byTruncatingTail
@@ -39,7 +39,7 @@ class QueContentTitleCell: UITableViewCell {
     lazy var qsTitleLab: UILabel = {
         let qsTitleLab = UILabel(frame: .init(x: 17, y: gradientImgV.kmaxY + 12, width: contentView.kwidth - 34, height: 0))
         qsTitleLab.font = UIFont(name: "Helvetica", size: 17)
-        qsTitleLab.textColor = .init(hex: "333333")
+        qsTitleLab.textColor = .init(hex: 0x333333)
         qsTitleLab.numberOfLines = 0
         qsTitleLab.contentMode = .left
         qsTitleLab.lineBreakMode = .byTruncatingTail
@@ -80,7 +80,7 @@ class QueContentTitleCell: UITableViewCell {
         gradientLayer.frame = .init(x: 0, y: 0, width: 100, height: 100)
         
         UIGraphicsBeginImageContext(.init(width: 100, height: 100))
-        gradientLayer.render(in: UIGraphicsGetCurrentContext())
+        gradientLayer.render(in: UIGraphicsGetCurrentContext()!)
         let ret = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return ret

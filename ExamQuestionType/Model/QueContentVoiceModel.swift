@@ -18,8 +18,6 @@ class QueContentVoiceModel: NSObject, QueContentModel {
     
     let queLevel2: QueLevel2
     
-    let qsTimeTotal: Double
-    
     let voiceUrl: String
     
     init?(queLevel2: QueLevel2) {
@@ -30,6 +28,5 @@ class QueContentVoiceModel: NSObject, QueContentModel {
         self.queLevel2 = queLevel2
         self.voiceUrl = voiceUrl
         let asset = AVAsset(url: url)
-        qsTimeTotal = asset.load(.duration).seconds
     }
 }

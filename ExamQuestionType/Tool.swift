@@ -7,15 +7,19 @@
 
 import UIKit
 
+let kScreenWidth = UIScreen.main.bounds.width
+
+let kScreenHeight = UIScreen.main.bounds.height
+
 class Tool: NSObject {
 
     static func positionToLetter(position: Int) -> String {
         let aStr: NSString = "A"
-        return String(format: "%c", aStr.character(at: 0) + position)
+        return String(format: "%c", Int(aStr.character(at: 0)) + position)
     }
     
     static func letterToPosition(letter: String) -> Int {
         let aStr: NSString = "A"
-        return (letter as NSString).character(at: 0) - aStr.character(at: 0)
+        return Int((letter as NSString).character(at: 0) - aStr.character(at: 0))
     }
 }

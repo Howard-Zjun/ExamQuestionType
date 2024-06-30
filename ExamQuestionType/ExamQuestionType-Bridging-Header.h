@@ -5,3 +5,6 @@
 #import "TFHpple.h"
 #import "TFHppleElement.h"
 #import "XPathQuery.h"
+
+#import <SDWebImage.h>
+#import <SDWebImageManager.h>

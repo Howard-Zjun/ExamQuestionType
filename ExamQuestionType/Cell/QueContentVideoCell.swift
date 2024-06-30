@@ -19,30 +19,30 @@ class QueContentVideoCell: UITableViewCell {
     
     var model: QueContentVideoModel! {
         didSet {
-            videoView.initPlayer(url: model.videoRes)
-            videoView.snp.updateConstraints { make in
-                make.top.equalToSuperview().inset(model.contentInset.top)
-                make.bottom.equalToSuperview().inset(model.contentInset.bottom)
-            }
+//            videoView.initPlayer(url: model.videoRes)
+//            videoView.snp.updateConstraints { make in
+//                make.top.equalToSuperview().inset(model.contentInset.top)
+//                make.bottom.equalToSuperview().inset(model.contentInset.bottom)
+//            }
         }
     }
     
     // MARK: - view
-    lazy var videoView: VideoPlayView = {
-        let videoView = VideoPlayView(frame: .init(x: 20, y: 0, width: swidth, height: sheight))
-        return videoView
-    }()
+//    lazy var videoView: VideoPlayView = {
+//        let videoView = VideoPlayView(frame: .init(x: 20, y: 0, width: swidth, height: sheight))
+//        return videoView
+//    }()
     
     // MARK: - init
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        contentView.addSubview(videoView)
-        videoView.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(20)
-            make.top.equalToSuperview().inset(0)
-            make.bottom.equalToSuperview().inset(0)
-            make.height.equalTo(sheight)
-        }
+//        contentView.addSubview(videoView)
+//        videoView.snp.makeConstraints { make in
+//            make.left.right.equalToSuperview().inset(20)
+//            make.top.equalToSuperview().inset(0)
+//            make.bottom.equalToSuperview().inset(0)
+//            make.height.equalTo(sheight)
+//        }
     }
     
     required init?(coder: NSCoder) {

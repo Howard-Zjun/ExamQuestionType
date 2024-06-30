@@ -39,8 +39,10 @@
             </tableViewCellContentView>
             <viewLayoutGuide key="safeArea" id="njF-e1-oar"/>
             <connections>
-                <outlet property="heightConstraints" destination="xPI-8R-ABw" id="utt-r7-1Tp"/>
                 <outlet property="textView" destination="Y84-Xx-Xkt" id="mSY-Si-Qh9"/>
+                <outlet property="textViewBottom" destination="F9V-zb-uuO" id="ipT-hl-bIG"/>
+                <outlet property="textViewHeight" destination="xPI-8R-ABw" id="d7D-o2-koR"/>
+                <outlet property="textViewTop" destination="66r-Xp-4Pc" id="S0x-lq-mpe"/>
             </connections>
             <point key="canvasLocation" x="74.809160305343511" y="20.422535211267608"/>
         </tableViewCell>

@@ -15,11 +15,11 @@ class QueContentDescribeCell: UITableViewCell {
     
     var model: QueContentDescribeModel! {
         didSet {
-            textViewTop.constant = model.contentInset.top
-            if let content = model.handleContent {
-                textView.text = content
-            } else if let contentAttr = model.handleContentAttr {
-                textView.attributedText = contentAttr
+            if textViewTop != nil {
+                textViewTop.constant = model.contentInset.top
+            }
+            if textView != nil {
+                textView.attributedText = model.attr
             }
         }
     }
@@ -33,7 +33,7 @@ class QueContentDescribeCell: UITableViewCell {
         didSet {
             textView.delegate = self
             textView.font = .systemFont(ofSize: 17)
-            textView.textColor = .init(hex: "333333")
+            textView.textColor = .init(hex: 0x333333)
             textView.isEditable = false
             observation = textView.observe(\.contentSize) { [weak self] textView, change in
                 self?.textHeight.constant = textView.contentSize.height
@@ -46,6 +46,8 @@ class QueContentDescribeCell: UITableViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         textHeight.constant = textView.contentSize.height
+        textViewTop.constant = model.contentInset.top
+        textView.attributedText = model.attr
     }
     
     deinit {

@@ -7,7 +7,7 @@
 
 import UIKit
 
-class QueLevel2: NSObject, Decodable {
+class QueLevel2: NSObject {
 
     let videoUrl: String?
     
@@ -27,26 +27,11 @@ class QueLevel2: NSObject, Decodable {
     
     let no: Int?
     
-    let score: Int
+    let score: Double
     
-    var userScore: Int
+    var userScore: Double
     
-    enum CodingKeys: String, CodingKey {
-        case videoUrl
-        case voiceUrl
-        case subLevel2
-        case content
-        case correctAnswers
-        case userAnswers
-        case options
-        case type
-        case no
-        case score
-        case userScore
-    }
-        
-    
-    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QueLevel2Type, no: Int?) {
+    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QueLevel2Type, no: Int?, score: Double) {
         self.videoUrl = videoUrl
         self.voiceUrl = voiceUrl
         self.subLevel2 = subLevel2
@@ -56,14 +41,8 @@ class QueLevel2: NSObject, Decodable {
         self.options = options
         self.type = type
         self.no = no
-    }
-    
-    override func copy() -> Any {
-        var subLevel2: [QueLevel2] = []
-        for item in self.subLevel2 {
-            subLevel2.append(item.copy())
-        }
-        return QueLevel2(videoUrl: videoUrl, voiceUrl: voiceUrl, subLevel2: subLevel2, content: content, correctAnswers: correctAnswers, userAnswers: userAnswers, options: options, type: type, no: no)
+        self.score = score
+        self.userScore = 0
     }
 }
 
@@ -73,22 +52,6 @@ extension QueLevel2 {
         case FillBlank = 0
         case Select
         case Record
-        case Sort
-        case Comprehensive
-    }
-}
-
-extension QueLevel2 {
-    
-    static var closeModel: QueLevel2 {
-        
-    }
-    
-    static var readComprehensionSubModel: QueLevel2 {
-        
-    }
-    
-    static var essayFillBlankSubModel: QueLevel2 {
-        
+        case essay
     }
 }

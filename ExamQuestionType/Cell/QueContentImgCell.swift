@@ -6,35 +6,36 @@
 //
 
 import UIKit
+import SnapKit
 
 class QueContentImgCell: UITableViewCell {
     
-    var imgHeight: CGFloat = 100
-    
-    var imgWidth: CGFloat = 100
-    
     var model: QueContentImgModel! {
         didSet {
-            imgView.sd_setImage(with: model.imageModel.src)
-            if var tempWidth = model.imageModel.width, var tempHeight = model.imageModel.height {
-                if tempWidth > kScreenWidth - 40 {
-                    tempHeight = (kScreenWidth - 40) / tempWidth * tempHeight
-                    tempWidth = kScreenWidth - 40
+            if let width = model.imageModel.width, let height = model.imageModel.height {
+                imgView.sd_setImage(with: model.imageModel.src)
+                imgFit(width: width, height: height)
+            } else {
+                let tempModel = model
+                imgView.sd_setImage(with: model.imageModel.src) { [weak self] img, _, _, _ in
+                    guard tempModel == self?.model else { return }
+                    if let img = img {
+                        self?.imgFit(width: img.size.width, height: img.size.height)
+                    } else {
+                        self?.imgFit(width: 100, height: 100)
+                    }
                 }
-                imgWidth = tempWidth
-                imgHeight = tempHeight
             }
             imgView.snp.updateConstraints { make in
                 make.top.equalToSuperview().inset(model.contentInset.top)
-                make.width.equalTo(imgWidth)
-                make.height.equalTo(imgHeight)
+                make.bottom.equalToSuperview().inset(model.contentInset.bottom)
             }
         }
     }
     
     // MARK: - view
     lazy var imgView: UIImageView = {
-        let imgView = UIImageView(frame: .init(x: 20, y: 0, width: imgWidth, height: imgHeight))
+        let imgView = UIImageView(frame: .init(x: 20, y: 0, width: 100, height: 100))
         return imgView
     }()
     
@@ -45,13 +46,26 @@ class QueContentImgCell: UITableViewCell {
         imgView.snp.makeConstraints { make in
             make.left.equalToSuperview().inset(20)
             make.top.equalToSuperview().inset(0)
-            make.bottom.equalToSuperview()
-            make.width.equalTo(imgWidth)
-            make.height.equalTo(imgHeight)
+            make.bottom.equalToSuperview().inset(0)
+            make.width.equalTo(100)
+            make.height.equalTo(100)
         }
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func imgFit(width: CGFloat, height: CGFloat) {
+        var width = width
+        var height = height
+        if width > kScreenWidth - 40 {
+            height = (kScreenWidth - 40) / width * height
+            width = kScreenWidth - 40
+        }
+        imgView.snp.updateConstraints { make in
+            make.width.equalTo(width)
+            make.height.equalTo(height)
+        }
     }
 }

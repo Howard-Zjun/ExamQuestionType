@@ -26,11 +26,13 @@ class QueContentSelectModel: NSObject, QueContentModel {
     // 选项
     let options: [String]
     
+    var delegate: QueContentModelDelegate?
+    
     var focunsIndex: Int? {
         didSet {
             if let focunsIndex = oldValue, focunsIndex < fillBlankAttrStrArr.count {
                 if getStrAnswer(index: focunsIndex) == nil { // 聚焦在没有答案的填空消失，添加缺省图标
-                    let newFillBlankStr = emptyFillBlankAttrStr(index: focunsIndex)
+                    let newFillBlankStr = NSAttributedString.emptyFillBlankAttrStr(index: focunsIndex)
                     let oldFillBlankStr = fillBlankAttrStrArr[focunsIndex]
                     let itemInAllIndex = (allAttrStrArr as NSArray).index(of: oldFillBlankStr)
                     fillBlankAttrStrArr[focunsIndex] = newFillBlankStr
@@ -54,7 +56,6 @@ class QueContentSelectModel: NSObject, QueContentModel {
             return nil
         }
         self.queLevel2 = queLevel2
-        let originContent = HTMLTranslate.stripBlk(html: queLevel2?.content ?? "")
         
         self.options = options
         self.allAttrStrArr = []
@@ -62,42 +63,75 @@ class QueContentSelectModel: NSObject, QueContentModel {
         self.resultAttributed = NSMutableAttributedString()
         super.init()
         
-        let comStrArr = originContent.components(separatedBy: "___")
-        for (index, itemStr) in comStrArr.enumerated() {
-            if !allAttrStrArr.isEmpty {
-                let fillBlankIndex = index - 1
-                var enterStr = spaceStr
-                var haveAnswer = false
-                var answer: String?
-                if fillBlankIndex < (qst.userAnswers.count ?? 0) {
-                    answer = qst.userAnswers[fillBlankIndex]
-                }
-                if let answer = answer, !answer.isEmpty {
-                    enterStr = (enterStr as NSString).replacingCharacters(in: .init(location: 1, length: 1), with: answer)
-                    haveAnswer = true
-                }
-
-                let fillBlankAttrStr: NSMutableAttributedString!
-                if haveAnswer {
-                    fillBlankAttrStr = NSMutableAttributedString(string: enterStr, attributes: [
-                        .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-                        .underlineColor : UIColor.black,
-                        .link : "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)",
-                        .font : UIFont.systemFont(ofSize: 18),
-                        .foregroundColor : UIColor.clear,
-                    ])
-                    fillBlankAttrStr.addAttribute(.foregroundColor, value: UIColor.blue, range: .init(location: 1, length: 1))
-                } else {
-                    fillBlankAttrStr = emptyFillBlankAttrStr(index: fillBlankIndex)
-                }
-                fillBlankAttrStrArr.append(fillBlankAttrStr)
-                allAttrStrArr.append(fillBlankAttrStr)
-            }
-            allAttrStrArr.append(.init(string: itemStr, attributes: [
-                .font : UIFont.systemFont(ofSize: 18),
-                .foregroundColor : UIColor.black,
-            ]))
+        guard let content = queLevel2.content, let data = content.data(using: .utf8) else {
+            return nil
         }
+        let hpple = TFHpple(data: data, isXML: false)
+        guard let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] else {
+            return nil
+        }
+        
+        var fillBlankIndex = 0
+        for element in elements {
+            for item in (element.children as? [TFHppleElement]) ?? [] {
+                if item.tagName == "text" {
+                    let attr = item.content.handleUIB(fontSize: 18)
+                    attr.addAttributes([
+                        .foregroundColor : UIColor.black
+                    ], range: .init(location: 0, length: attr.length))
+                    allAttrStrArr.append(attr)
+                } else if item.tagName == "img" {
+                    if let imgModels = QueContentImgModel.ImgModel.load(html: item.raw) {
+                        
+                        for imgModel in imgModels {
+                            allAttrStrArr.append(NSMutableAttributedString()) // 占位
+                            let index = allAttrStrArr.count
+                            SDWebImageManager.shared.loadImage(with: imgModel.src, progress: nil) { [weak self] img, data, _, _, _, _ in
+                                guard let self = self, let img = img else { return }
+                                let attachment = NSTextAttachment(image: img)
+                                let width = imgModel.width ?? img.size.width
+                                let height = imgModel.height ?? img.size.height
+                                attachment.bounds = .init(x: 0, y: 0, width: width, height: height)
+                                
+                                let imgAttr = NSMutableAttributedString(attachment: attachment)
+                                
+                                allAttrStrArr[index] = imgAttr
+                                makeResultAttr()
+                                
+                                delegate?.contentDidChange(model: self)
+                            }
+                        }
+                    }
+                } else if item.tagName == "blk" {
+                    var enterStr = spaceStr
+                    var haveAnswer = false
+                    if fillBlankIndex < queLevel2.userAnswers.count, !queLevel2.userAnswers[fillBlankIndex].isEmpty {
+                        enterStr = queLevel2.userAnswers[fillBlankIndex]
+                        haveAnswer = true
+                    }
+                    
+                    let fillBlankAttrStr: NSMutableAttributedString!
+                    if haveAnswer {
+                        fillBlankAttrStr = NSMutableAttributedString(string: enterStr, attributes: [
+                            .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
+                            .underlineColor : UIColor.black,
+                            .link : "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)",
+                            .font : UIFont.systemFont(ofSize: 18),
+                            .foregroundColor : UIColor.clear,
+                        ])
+                        fillBlankAttrStr.addAttribute(.foregroundColor, value: UIColor.blue, range: .init(location: 1, length: 1))
+                    } else {
+                        fillBlankAttrStr = NSAttributedString.emptyFillBlankAttrStr(index: fillBlankIndex)
+                    }
+                    
+                    fillBlankIndex += 1
+                    
+                    fillBlankAttrStrArr.append(fillBlankAttrStr)
+                    allAttrStrArr.append(fillBlankAttrStr)
+                }
+            }
+        }
+        
         for itemAttrStr in allAttrStrArr {
             resultAttributed.append(itemAttrStr)
         }
@@ -105,12 +139,12 @@ class QueContentSelectModel: NSObject, QueContentModel {
     }
     
     func setAnswer(optionIndex: Int, index: Int) {
-        while let count1 = qst.userAnswers.count, let count2 = qst.correctAnswers.count, count1 < count2 {
-            qst.userAnswers.append("")
+        while let count = queLevel2.correctAnswers?.count, queLevel2.userAnswers.count < count {
+            queLevel2.userAnswers.append("")
         }
-        qst.userAnswers[index] = Tool.positionToLetter(position: optionIndex)
+        queLevel2.userAnswers[index] = Tool.positionToLetter(position: optionIndex)
         
-        fillBlankAttrStrArr[index].replaceCharacters(in: .init(location: 1, length: 1), with: Constant.positionToLetter(position: optionIndex))
+        fillBlankAttrStrArr[index].replaceCharacters(in: .init(location: 1, length: 1), with: Tool.positionToLetter(position: optionIndex))
         fillBlankAttrStrArr[index].addAttribute(.foregroundColor, value: UIColor.blue, range: .init(location: 1, length: 1))
         makeResultAttr()
     }
@@ -127,36 +161,11 @@ class QueContentSelectModel: NSObject, QueContentModel {
         if index >= queLevel2.userAnswers.count {
             return nil
         }
-        if let str = queLevel2.userAnswers[index] {
-            return str
+        if !queLevel2.userAnswers[index].isEmpty {
+            return queLevel2.userAnswers[index]
         } else {
             return nil
         }
-    }
-    
-    func emptyFillBlankAttrStr(index: Int) -> NSMutableAttributedString {
-        // 只能逐个添加，使用 addAttribute 添加附件没有效果
-        let ret = NSMutableAttributedString()
-        ret.append(.init(string: "⌘"))
-        
-        if isFocus {
-            ret.append(.init(string: "⌘"))
-        } else {
-            let attachment = NSTextAttachment(image: .init(named: "blank_icon_edit")!)
-            attachment.bounds = .init(x: 0, y: 0, width: 18, height: 18)
-            ret.append(.init(attachment: attachment))
-        }
-        
-        ret.append(.init(string: "⌘"))
-        
-        ret.addAttributes([
-            .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-            .underlineColor : isFocus ? UIColor(hex: "2F81FB") : UIColor.black,
-            .link : "\(fillBlankURLPrefix)\(index)",
-            .font : UIFont.systemFont(ofSize: 18),
-            .foregroundColor : UIColor.clear,
-        ], range: .init(location: 0, length: ret.length))
-        return ret
     }
     
     func makeResultAttr() {

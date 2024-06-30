@@ -15,19 +15,20 @@ class QueContentTableModel: NSObject, QueContentModel {
     
     var contentInset: UIEdgeInsets = .zero
     
-    let queLevel2: QueLevel2
-    
     let tableModel: EQTableModel
     
-    init?(queLevel2: QueLevel2) {
-        guard let content = queLevel2.content else {
-            return nil
-        }
-        guard let tableModel = EQTableModel(htmlStr: content) else {
+    init?(html: String) {
+        guard let tableModel = EQTableModel(html: html) else {
             return nil
         }
         self.tableModel = tableModel
-        self.qstDetailLevel2 = qstDetailLevel2
+    }
+    
+    convenience init?(queLevel2: QueLevel2) {
+        guard let content = queLevel2.content else {
+            return nil
+        }
+        self.init(html: content)
     }
 }
 
@@ -41,8 +42,12 @@ class EQTableModel: NSObject {
     
     let expansionTrModelArr: [EQTableTdModel]
     
-    init?(htmlStr: String) {
-        if let data = htmlStr.data(using: .utf8) {
+    let maxColCount: Int
+    
+    let rowCount: Int
+    
+    init?(html: String) {
+        if let data = html.data(using: .utf8) {
             var theadModel: EQTableHeadModel?
             var trModelArr: [EQTableTrModel] = []
 
@@ -75,8 +80,8 @@ class EQTableModel: NSObject {
             return nil
         }
         
-        let range = (htmlStr as NSString).range(of: "</table>")
-        let suffixStr = (htmlStr as NSString).substring(from: range.location + range.length)
+        let range = (html as NSString).range(of: "</table>")
+        let suffixStr = (html as NSString).substring(from: range.location + range.length)
         if let data = suffixStr.data(using: .utf8) {
             let hpple = TFHpple(data: data, isXML: false)
             let arr = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement]
@@ -90,8 +95,12 @@ class EQTableModel: NSObject {
             }
         }
         
+        var maxColCount = 0
+        var rowCount = 0
         if let theadModel = theadModel {
             for (trIndex, trModel) in theadModel.trModelArr.enumerated() {
+                maxColCount = max(maxColCount, trModel.tdModelArr.count)
+                rowCount += 1
                 for (tdIndex, tdModel) in trModel.tdModelArr.enumerated() {
                     tdModel.yNum = trIndex
                     tdModel.xNum = tdIndex
@@ -99,12 +108,18 @@ class EQTableModel: NSObject {
                 }
             }
         }
+        for trModel in trModelArr {
+            maxColCount = max(maxColCount, trModel.tdModelArr.count)
+            rowCount += 1
+        }
+        
+        self.maxColCount = maxColCount
+        self.rowCount = rowCount
         
         // 将单元所在位置修正，下面是数据都正确的处理逻辑，没有应对异常的处理
         
         // 每一列的阻碍
-        var barrierArr: [Int] = .init(repeating: 0, count: trModelArr[0].tdModelArr.count)
-        let maxColCount = theadModel?.trModelArr.first?.tdModelArr.count ?? barrierArr.count
+        var barrierArr: [Int] = .init(repeating: 0, count: maxColCount)
         
         for (trIndex, trModel) in trModelArr.enumerated() {
             var left = 0 // 当前等待修正的下标

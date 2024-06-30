@@ -46,7 +46,9 @@
             <connections>
                 <outlet property="textField" destination="VcI-qh-cni" id="P6B-xF-yKa"/>
                 <outlet property="textView" destination="O6U-jD-m8L" id="7js-lr-md5"/>
-                <outlet property="textViewHeightContraint" destination="qm4-tI-aE6" id="J93-KU-8hJ"/>
+                <outlet property="textViewBottom" destination="KxG-lP-fJc" id="iQ0-Ux-cHe"/>
+                <outlet property="textViewHeight" destination="qm4-tI-aE6" id="jJd-G9-Weo"/>
+                <outlet property="textViewTop" destination="iwg-Cs-fOM" id="1Sl-lE-gvX"/>
             </connections>
             <point key="canvasLocation" x="139" y="21"/>
         </tableViewCell>

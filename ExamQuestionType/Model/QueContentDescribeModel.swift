@@ -15,18 +15,35 @@ class QueContentDescribeModel: NSObject, QueContentModel {
     
     var contentInset: UIEdgeInsets = .zero
     
-    let queLevel2: QueLevel2
+    let attr: NSAttributedString
     
-    var handleContent: String?
-    
-    var handleContentAttr: NSAttributedString?
-    
-    init?(queLevel2: QueLevel2) {
-        guard let content = queLevel2.content else {
+    init?(html: String) {
+        guard let data = html.data(using: .utf8) else {
+            return nil
+        }
+        let hpple = TFHpple(data: data, isXML: false)
+        guard let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] else {
             return nil
         }
         
-        self.queLevel2 = queLevel2
-        handleContent = "\(queLevel2.no)" + HTMLTranslate.stripBlk(html: queLevel2.content ?? "")
+        var text = ""
+        for element in elements {
+            // 去掉<p></p>
+            if let raw = element.raw {
+                let content = (element.raw as NSString).substring(with: .init(location: 3, length: raw.count - 3 - 4))
+                text += content + "\n"
+            }
+        }
+        
+        let attr = text.handleUIB(fontSize: 16)
+        
+        self.attr = attr
+    }
+    
+    convenience init?(queLevel2: QueLevel2) {
+        guard let content = queLevel2.content else {
+            return nil
+        }
+        self.init(html: content)
     }
 }

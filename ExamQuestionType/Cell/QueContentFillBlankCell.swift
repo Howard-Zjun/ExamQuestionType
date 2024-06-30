@@ -21,15 +21,24 @@ class QueContentFillBlankCell: UITableViewCell {
     var observation: NSKeyValueObservation?
 
     // 用于通知 tableView 更新
+    var contentSizeBeginChange: ((UITextView) -> Void)?
+    
     var contentSizeDidChange: ((UITextView) -> Void)?
 
-    var contentModel: QueContentFillBlankModel! {
+    @IBOutlet weak var textViewBottom: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewTop: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewHeight: NSLayoutConstraint!
+
+    var model: QueContentFillBlankModel! {
         didSet {
-            textView.attributedText = contentModel.resultAttributed
+            textView.delegate = self
+            textViewTop.constant = model.contentInset.top
+            textViewBottom.constant = model.contentInset.bottom
+            textView.attributedText = model.resultAttributed
         }
     }
-    
-    @IBOutlet weak var textViewHeightContraint: NSLayoutConstraint!
     
     // MARK: - view
     // 用于点击 textView 的填空时，聚焦 textField 来编辑
@@ -49,14 +58,20 @@ class QueContentFillBlankCell: UITableViewCell {
             textView.linkTextAttributes = .init()
             
             observation = textView.observe(\.contentSize, options: .new) { [weak self] textView, change in
+                guard let self = self else { return }
                 print("\(NSStringFromClass(Self.self)) \(#function): 变化高度\(textView.contentSize)")
                 
-                self?.textViewHeightContraint.constant = textView.contentSize.height
-                self?.contentSizeDidChange?(textView)
+                NSObject.cancelPreviousPerformRequests(withTarget: self)
+                perform(#selector(responseSize), with: nil, afterDelay: 0.1)
             }
         }
     }
 
+    // MARK: - life
+    deinit {
+        observation?.invalidate()
+    }
+    
     // MARK: - target
     @objc func textDidChange(_ sender: UITextField) {
         print("\(NSStringFromClass(Self.self)) \(#function) text: \(sender.text ?? "")")
@@ -64,8 +79,16 @@ class QueContentFillBlankCell: UITableViewCell {
         if text.contains("⌘") {
             text = text.replacingOccurrences(of: "⌘", with: "")
         }
-        contentModel.setAnswer(text: sender.text ?? "")
-        textView.attributedText = contentModel.resultAttributed
+        model.setAnswer(text: sender.text ?? "")
+        textView.attributedText = model.resultAttributed
+    }
+    
+    @objc func responseSize() {
+        contentSizeBeginChange?(textView)
+        
+        textViewBottom.constant = textView.contentSize.height
+        
+        contentSizeDidChange?(textView)
     }
 }
 
@@ -74,12 +97,12 @@ extension QueContentFillBlankCell: UITextViewDelegate {
  
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
         print("\(NSStringFromClass(Self.self)) \(#function) url: \(URL.absoluteString)")
-        if URL.absoluteString.hasPrefix(fillBlankURLPrefix) {
-            if let str = URL.absoluteString.components(separatedBy: ":").last, let index = Int(str) {
-                contentModel.focunsIndex = index
-                textView.attributedText = contentModel.resultAttributed
+        if URL.absoluteString.hasPrefix(snFillBlankURLPrefix) {
+            if let str = URL.absoluteString.components(separatedBy: snSeparate).last, let index = Int(str) {
+                model.focunsIndex = index
+                textView.attributedText = model.resultAttributed
                 
-                textField.text = contentModel.getAnswer(index: index)
+                textField.text = model.getAnswer(index: index)
                 
                 print("\(NSStringFromClass(Self.self)) \(#function) index: \(index), text: \(textField.text ?? "")")
                 
@@ -102,14 +125,19 @@ extension QueContentFillBlankCell: UITextFieldDelegate {
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        var answer: String = ""
-        if let ans = textField.text {
+        if var answer = textField.text {
             answer = answer.replacingOccurrences(of: "⌘", with: "")
-            answer = ans.removeSpace()
-            answer = answer.removeMiddleSpace()
+            model.setAnswer(text: answer)
         }
-        contentModel.setAnswer(text: answer)
-        contentModel.updateScore()
+        model.updateScore()
+    }
+}
+
+// MARK: - QueContentModelDelegate
+extension QueContentFillBlankCell: QueContentModelDelegate {
+    
+    func contentDidChange(model: any QueContentModel) {
+        textView.attributedText = self.model.resultAttributed
     }
 }
 

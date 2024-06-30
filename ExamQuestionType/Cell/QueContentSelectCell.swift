@@ -1,27 +1,29 @@
-//
-//  QueContentSelectCell.swift
-//  ExamQuestionType
-//
-//  Created by ios on 2024/6/20.
-//
-
 import UIKit
 
 class QueContentSelectCell: UITableViewCell {
 
     var observation: NSKeyValueObservation?
 
-    var contentModel: QueContentSelectModel! {
+    var model: QueContentSelectModel! {
         didSet {
-            textView.attributedText = contentModel.resultAttributed
+            model.delegate = self
+            textViewTop.constant = model.contentInset.top
+            textViewBottom.constant = model.contentInset.bottom
+            textView.attributedText = model.resultAttributed
         }
     }
+    
+    var contentSizeBeginChange: ((UITextView) -> Void)?
     
     var contentSizeDidChange: ((UITextView) -> Void)?
 
     var actionDidChange: ((Int) -> Void)?
     
-    @IBOutlet weak var heightConstraint: NSLayoutConstraint!
+    @IBOutlet weak var textViewHeight: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewTop: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewBottom: NSLayoutConstraint!
     
     @IBOutlet weak var textView: UITextView! {
         didSet {
@@ -31,10 +33,11 @@ class QueContentSelectCell: UITableViewCell {
             textView.linkTextAttributes = .init()
             
             observation = textView.observe(\.contentSize, options: .new) { [weak self] textView, change in
+                guard let self = self else { return }
                 print("\(NSStringFromClass(Self.self)) \(#function): 变化高度\(textView.contentSize)")
-                self?.heightConstraint.constant = textView.contentSize.height
                 
-                self?.contentSizeDidChange?(textView)
+                NSObject.cancelPreviousPerformRequests(withTarget: self)
+                perform(#selector(responseSize), with: nil, afterDelay: 0.1)
             }
         }
     }
@@ -42,18 +45,35 @@ class QueContentSelectCell: UITableViewCell {
     deinit {
         observation?.invalidate()
     }
+    
+    // MARK: - target
+    @objc func responseSize() {
+        contentSizeBeginChange?(textView)
+        
+        textViewBottom.constant = textView.contentSize.height
+        
+        contentSizeDidChange?(textView)
+    }
 }
 
 // MARK: - UITextViewDelegate
 extension QueContentSelectCell: UITextViewDelegate {
     
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
-        print("\(NSStringFromClass(SelectFillBlankCell.self)) \(#function) url: \(URL.absoluteString)")
-        if URL.absoluteString.hasPrefix(fillBlankURLPrefix) {
-            if let postionString = URL.absoluteString.components(separatedBy: ":").last{
+        print("\(NSStringFromClass(Self.self)) \(#function) url: \(URL.absoluteString)")
+        if URL.absoluteString.hasPrefix(snFillBlankURLPrefix) {
+            if let postionString = URL.absoluteString.components(separatedBy: snSeparate).last{
                 self.actionDidChange?(Int(postionString) ?? 0)
             }
         }
         return false
+    }
+}
+
+// MARK: - QueContentModelDelegate
+extension QueContentSelectCell: QueContentModelDelegate {
+    
+    func contentDidChange(model: any QueContentModel) {
+        textView.attributedText = self.model.resultAttributed
     }
 }

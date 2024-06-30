@@ -11,7 +11,6 @@ class QueContentVoiceCell: UITableViewCell {
     
     var model: QueContentVoiceModel! {
         didSet {
-            timeLab.text = DateUtil.parseTime(timeInMillis: model.qsTimeTotal * 1000)
             baseView.snp.updateConstraints { make in
                 make.top.equalToSuperview().inset(model.contentInset.top)
                 make.bottom.equalToSuperview().inset(model.contentInset.bottom)
@@ -25,9 +24,10 @@ class QueContentVoiceCell: UITableViewCell {
         return baseView
     }()
     
-    lazy var playBtn: PlayButton = {
-        let playBtn = PlayButton(frame: .init(x: 17, y: (contentView.kheight - 40) * 0.5, width: 40, height: 40))
+    lazy var playBtn: UIButton = {
+        let playBtn = UIButton(frame: .init(x: 17, y: (contentView.kheight - 40) * 0.5, width: 40, height: 40))
         playBtn.setImage(.init(named: "record_start"), for: .normal)
+        playBtn.setImage(.init(named: "record_stop"), for: .selected)
         playBtn.addTarget(self, action: #selector(touchPlayBtn(_:)), for: .touchUpInside)
         return playBtn
     }()
@@ -35,7 +35,7 @@ class QueContentVoiceCell: UITableViewCell {
     lazy var curTimeLab: UILabel = {
         let curTimeLab = UILabel(frame: .init(x: playBtn.kmaxX + 10, y: (contentView.kheight - 18) * 0.5, width: 42, height: 18))
         curTimeLab.font = .systemFont(ofSize: 15)
-        curTimeLab.textColor = .init(hex: "CCCCCC")
+        curTimeLab.textColor = .init(hex: 0xCCCCCC)
         curTimeLab.text = "00:00"
         return curTimeLab
     }()
@@ -49,7 +49,7 @@ class QueContentVoiceCell: UITableViewCell {
     lazy var timeLab: UILabel = {
         let timeLab = UILabel(frame: .init(x: contentView.kwidth - 150 - 42, y: (contentView.kheight - 18) * 0.5, width: 42, height: 18))
         timeLab.font = .systemFont(ofSize: 15)
-        timeLab.textColor = .init(hex: "CCCCCC")
+        timeLab.textColor = .init(hex: 0xCCCCCC)
         timeLab.text = "00:00"
         return timeLab
     }()
@@ -97,34 +97,25 @@ class QueContentVoiceCell: UITableViewCell {
     
     // MARK: - target
     @objc func touchPlayBtn(_ sender: UIButton) {
-        if playBtn.status == .Play{
-            AVPlayerManger.shared.pause()
-            playBtn.pauseButton()
-        }else if playBtn.status == .Pause{
-            AVPlayerManger.shared.resume()
-            playBtn.playButton()
-        }else{
-            if  let qsListen =  model.queLevel2.videoUrl {
-                playQsAudio(url: qsListen)
-                playBtn.playButton()
-            }else  if let gsSubjectVoice =  model.queLevel2.voiceUrl {
-                playQsAudio(url: gsSubjectVoice)
-                playBtn.playButton()
-            }
+        sender.isSelected.toggle()
+        if sender.isSelected {
+            
+        } else {
+            
         }
     }
     
     func playQsAudio(url:String){
-        AVPlayerManger.shared.playURL(url: URL(string: url),finishBlock: {[weak self]  in
-            guard let self = self else {return}
-            self.curTimeLab.text =  "00:00"
-            self.progressView.progress =  0.0
-            self.playBtn.initButton()
-        },progress:  {[weak self] cur in
-            guard let self = self else {return}
-            curTimeLab.text = DateUtil.parseTime(timeInMillis: cur * 1000)
-            progressView.progress = Float(cur) / Float(model.qsTimeTotal)
-        })
+//        AVPlayerManger.shared.playURL(url: URL(string: url),finishBlock: {[weak self]  in
+//            guard let self = self else {return}
+//            self.curTimeLab.text =  "00:00"
+//            self.progressView.progress =  0.0
+//            self.playBtn.initButton()
+//        },progress:  {[weak self] cur in
+//            guard let self = self else {return}
+//            curTimeLab.text = DateUtil.parseTime(timeInMillis: cur * 1000)
+//            progressView.progress = Float(cur) / Float(model.qsTimeTotal)
+//        })
     }
 }
 

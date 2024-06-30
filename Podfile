@@ -6,5 +6,6 @@ target 'ExamQuestionType' do
   use_frameworks!
 
   # Pods for ExamQuestionType
-
+  pod 'SDWebImage' 
+  pod 'SnapKit' 
 end
