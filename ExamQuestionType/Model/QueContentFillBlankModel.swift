@@ -127,10 +127,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             }
         }
         
-        for itemAttrStr in allAttrStrArr {
-            resultAttributed.append(itemAttrStr)
-        }
-        resultAttributed.addAttribute(.baselineOffset, value: NSNumber(value: 5), range: .init(location: 0, length: resultAttributed.length))
+        makeResultAttr()
     }
     
     func setAnswer(text: String) {

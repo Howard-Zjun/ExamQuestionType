@@ -13,9 +13,9 @@ class QueContentSelectCell: UITableViewCell {
         }
     }
     
-    var contentSizeBeginChange: ((UITextView) -> Void)?
+    var contentSizeBeginChange: (() -> Void)?
     
-    var contentSizeDidChange: ((UITextView) -> Void)?
+    var contentSizeDidChange: (() -> Void)?
 
     var actionDidChange: ((Int) -> Void)?
     
@@ -48,11 +48,11 @@ class QueContentSelectCell: UITableViewCell {
     
     // MARK: - target
     @objc func responseSize() {
-        contentSizeBeginChange?(textView)
+        contentSizeBeginChange?()
         
         textViewBottom.constant = textView.contentSize.height
         
-        contentSizeDidChange?(textView)
+        contentSizeDidChange?()
     }
 }
 

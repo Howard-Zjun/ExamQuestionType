@@ -133,7 +133,6 @@ extension String {
         let attr = NSMutableAttributedString(string: text, attributes: [
             .font : UIFont.systemFont(ofSize: fontSize),
             .foregroundColor : UIColor.black,
-            .paragraphStyle : paragraphStyle,
             .baselineOffset : NSNumber(value: 5)
         ])
     
@@ -174,19 +173,19 @@ extension String {
 
 extension UITableView {
     
-//    func register<T : UITableViewCell.Type>(_ cellType: T) {
-//        if let nib = UINib(nibName: NSStringFromClass(cellType), bundle: nil) {
-//            register(nib, forCellReuseIdentifier: NSStringFromClass(cellType))
-//        } else {
-//            register(cellType, forCellReuseIdentifier: NSStringFromClass(cellType))
-//        }
-//    }
-//    
-//    func dequeueReusableCell<T : UITableViewCell>(_ cellType: T, indexPath: IndexPath) -> T {
-//        if let cell = dequeueReusableCell(withIdentifier: NSStringFromClass(cellType), for: indexPath) as? T {
-//            return cell
-//        } else {
-//            fatalError("没有注册\(cellType)")
-//        }
-//    }
+    func register<T : UITableViewCell>(_ cellType: T.Type) {
+        if Bundle.main.path(forResource: String(describing: cellType), ofType: "nib")?.first != nil {
+            register(.init(nibName: String(describing: cellType), bundle: nil), forCellReuseIdentifier: NSStringFromClass(cellType))
+        } else {
+            register(cellType, forCellReuseIdentifier: NSStringFromClass(cellType))
+        }
+    }
+    
+    func dequeueReusableCell<T : UITableViewCell>(_ cellType: T.Type, indexPath: IndexPath) -> T {
+        if let cell = dequeueReusableCell(withIdentifier: NSStringFromClass(cellType), for: indexPath) as? T {
+            return cell
+        } else {
+            fatalError("没有注册\(cellType)")
+        }
+    }
 }

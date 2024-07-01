@@ -9,9 +9,9 @@ import UIKit
 
 class QueContentEssayCell: UITableViewCell {
 
-    var contentSizeBeginChange: ((UITextView) -> Void)?
+    var contentSizeWillChange: (() -> Void)?
     // 用来通知外部 tableView 做更新
-    var contentSizeDidChange: ((UITextView) -> Void)?
+    var contentSizeDidChange: (() -> Void)?
     
     var textDidChange: ((UITextView, String) -> Void)?
     
@@ -54,7 +54,7 @@ class QueContentEssayCell: UITableViewCell {
     
     // MARK: - target
     @objc func responseSize() {
-        contentSizeBeginChange?(textView)
+        contentSizeWillChange?()
         
         if textView.contentSize.height < 30 {
             textViewHeight.constant = 30
@@ -62,7 +62,7 @@ class QueContentEssayCell: UITableViewCell {
             textViewHeight.constant = textView.contentSize.height
         }
         
-        contentSizeDidChange?(textView)
+        contentSizeDidChange?()
     }
     
     func set(content: String) {

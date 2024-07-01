@@ -23,11 +23,7 @@ class QueDetailViewController: UIViewController {
     var models: [QueContentModel] = [] {
         didSet {
             for model in models {
-                if let _ = Bundle.main.path(forResource: String(describing: model.cellType), ofType: "nib") {
-                    tableView.register(UINib(nibName: String(describing: model.cellType), bundle: nil), forCellReuseIdentifier: NSStringFromClass(model.cellType))
-                } else {
-                    tableView.register(model.cellType, forCellReuseIdentifier: NSStringFromClass(model.cellType))
-                }
+                tableView.register(model.cellType)
             }
         }
     }
@@ -36,6 +32,7 @@ class QueDetailViewController: UIViewController {
         let tableView = UITableView(frame: .init(x: 0, y: 0, width: view.frame.width, height: view.frame.height), style: .plain)
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.separatorStyle = .none
         return tableView
     }()
     
@@ -100,68 +97,71 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let model = models[indexPath.row]
         if let titleModel = model as? QueContentTitleModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentTitleCell
+            let cell = tableView.dequeueReusableCell(QueContentTitleCell.self, indexPath: indexPath)
             cell.model = titleModel
             cell.selectionStyle = .none
             return cell
         } else if let describeModel = model as? QueContentDescribeModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentDescribeCell
+            let cell = tableView.dequeueReusableCell(QueContentDescribeCell.self, indexPath: indexPath)
             cell.model = describeModel
-            cell.contentSizeDidChange = { _ in
+            cell.contentSizeWillChange = {
+                tableView.beginUpdates()
+            }
+            cell.contentSizeDidChange = {
                 tableView.endUpdates()
             }
             cell.selectionStyle = .none
             return cell
         } else if let essayModel = model as? QueContentEssayModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentEssayCell
+            let cell = tableView.dequeueReusableCell(QueContentEssayCell.self, indexPath: indexPath)
             cell.model = essayModel
-            cell.contentSizeBeginChange = { _ in
+            cell.contentSizeWillChange = {
                 tableView.beginUpdates()
             }
-            cell.contentSizeDidChange = { _ in
+            cell.contentSizeDidChange = {
                 tableView.endUpdates()
             }
             cell.selectionStyle = .none
             return cell
         } else if let fillBlankModel = model as? QueContentFillBlankModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentFillBlankCell
+            let cell = tableView.dequeueReusableCell(QueContentFillBlankCell.self, indexPath: indexPath)
             cell.model = fillBlankModel
-            cell.contentSizeBeginChange = { _ in
+            cell.contentSizeWillChange = {
                 tableView.beginUpdates()
             }
-            cell.contentSizeDidChange = { _ in
+            cell.contentSizeDidChange = {
                 tableView.endUpdates()
             }
             cell.selectionStyle = .none
             return cell
         } else if let imgModel = model as? QueContentImgModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentImgCell
+            let cell = tableView.dequeueReusableCell(QueContentImgCell.self, indexPath: indexPath)
             cell.model = imgModel
             cell.selectionStyle = .none
             return cell
         } else if let selectModel = model as? QueContentSelectModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentSelectCell
+            let cell = tableView.dequeueReusableCell(QueContentSelectCell.self, indexPath: indexPath)
             cell.model = selectModel
-            cell.contentSizeBeginChange = { _ in
+            cell.contentSizeBeginChange = {
                 tableView.beginUpdates()
             }
-            cell.contentSizeDidChange = { _ in
+            cell.contentSizeDidChange = {
                 tableView.endUpdates()
             }
             cell.selectionStyle = .none
             return cell
         } else if let tableModel = model as? QueContentTableModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentTableCell
+            let cell = tableView.dequeueReusableCell(QueContentTableCell.self, indexPath: indexPath)
             cell.model = tableModel
             cell.selectionStyle = .none
             return cell
         } else if let videoModel = model as? QueContentVideoModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentVideoCell
+            let cell = tableView.dequeueReusableCell(QueContentVideoCell.self, indexPath: indexPath)
             cell.model = videoModel
             cell.selectionStyle = .none
             return cell
         } else if let voiceModel = model as? QueContentVoiceModel {
-            let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(model.cellType), for: indexPath) as! QueContentVoiceCell
+            let cell = tableView.dequeueReusableCell(QueContentVoiceCell.self, indexPath: indexPath)
             cell.model = voiceModel
             cell.selectionStyle = .none
             return cell

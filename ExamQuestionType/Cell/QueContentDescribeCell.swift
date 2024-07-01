@@ -8,54 +8,55 @@
 import UIKit
 
 class QueContentDescribeCell: UITableViewCell {
-
-    @IBOutlet weak var textHeight: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewHeight: NSLayoutConstraint!
     
     @IBOutlet weak var textViewTop: NSLayoutConstraint!
     
+    @IBOutlet weak var textViewBottom: NSLayoutConstraint!
+    
     var model: QueContentDescribeModel! {
         didSet {
-            if textViewTop != nil {
-                textViewTop.constant = model.contentInset.top
-            }
-            if textView != nil {
-                textView.attributedText = model.attr
-            }
+            textViewTop.constant = model.contentInset.top
+            textViewBottom.constant = model.contentInset.bottom
+            textView.attributedText = model.attr
         }
     }
     
-    var contentSizeDidChange: ((UITextView) -> Void)?
+    var contentSizeWillChange: (() -> Void)?
+    
+    var contentSizeDidChange: (() -> Void)?
     
     var observation: NSKeyValueObservation?
 
     // MARK: - view
     @IBOutlet weak var textView: UITextView! {
         didSet {
-            textView.delegate = self
             textView.font = .systemFont(ofSize: 17)
             textView.textColor = .init(hex: 0x333333)
             textView.isEditable = false
+            textView.isSelectable = false
             observation = textView.observe(\.contentSize) { [weak self] textView, change in
-                self?.textHeight.constant = textView.contentSize.height
-                self?.contentSizeDidChange?(textView)
+                guard let self = self else { return }
+                print("\(NSStringFromClass(Self.self)) \(#function): 变化高度\(textView.contentSize)")
+
+                NSObject.cancelPreviousPerformRequests(withTarget: self)
+                perform(#selector(responseSize), with: nil, afterDelay: 0.1)
             }
         }
     }
     
     // MARK: - init
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        textHeight.constant = textView.contentSize.height
-        textViewTop.constant = model.contentInset.top
-        textView.attributedText = model.attr
-    }
-    
     deinit {
         observation?.invalidate()
     }
-}
-
-// MARK: - UITextViewDelegate
-extension QueContentDescribeCell: UITextViewDelegate {
     
+    // MARK: - target
+    @objc func responseSize() {
+        contentSizeWillChange?()
+        
+        textViewHeight.constant = textView.contentSize.height
+        
+        contentSizeDidChange?()
+    }
 }

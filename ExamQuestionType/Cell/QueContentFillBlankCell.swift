@@ -21,9 +21,9 @@ class QueContentFillBlankCell: UITableViewCell {
     var observation: NSKeyValueObservation?
 
     // 用于通知 tableView 更新
-    var contentSizeBeginChange: ((UITextView) -> Void)?
+    var contentSizeWillChange: (() -> Void)?
     
-    var contentSizeDidChange: ((UITextView) -> Void)?
+    var contentSizeDidChange: (() -> Void)?
 
     @IBOutlet weak var textViewBottom: NSLayoutConstraint!
     
@@ -33,7 +33,7 @@ class QueContentFillBlankCell: UITableViewCell {
 
     var model: QueContentFillBlankModel! {
         didSet {
-            textView.delegate = self
+            model.delegate = self
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
             textView.attributedText = model.resultAttributed
@@ -84,11 +84,11 @@ class QueContentFillBlankCell: UITableViewCell {
     }
     
     @objc func responseSize() {
-        contentSizeBeginChange?(textView)
+        contentSizeWillChange?()
         
-        textViewBottom.constant = textView.contentSize.height
+        textViewHeight.constant = textView.contentSize.height
         
-        contentSizeDidChange?(textView)
+        contentSizeDidChange?()
     }
 }
 

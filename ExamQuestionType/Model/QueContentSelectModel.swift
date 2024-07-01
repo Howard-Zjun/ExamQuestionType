@@ -134,7 +134,6 @@ class QueContentSelectModel: NSObject, QueContentModel {
             let itemAttr = "\n".handleUIB(fontSize: 18)
             itemAttr.addAttributes([
                 .foregroundColor : UIColor.black,
-                .paragraphStyle : style
             ], range: .init(location: 0, length: itemAttr.length))
             allAttrStrArr.append(itemAttr)
         }

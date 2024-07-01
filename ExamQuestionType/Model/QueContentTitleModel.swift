@@ -13,7 +13,7 @@ class QueContentTitleModel: NSObject, QueContentModel {
         QueContentTitleCell.self
     }
     
-    var contentInset: UIEdgeInsets = .zero
+    var contentInset: UIEdgeInsets = .init(top: 0, left: 0, bottom: 10, right: 0)
     
     let title: String
     
