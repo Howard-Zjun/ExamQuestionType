@@ -20,7 +20,7 @@ class QueContentEssayModel: NSObject, QueContentModel {
     let index: Int
     
     init?(queLevel2: QueLevel2, index: Int) {
-        guard queLevel2.type == .FillBlank else {
+        guard queLevel2.type == .essay else {
             return nil
         }
         self.queLevel2 = queLevel2
@@ -29,14 +29,14 @@ class QueContentEssayModel: NSObject, QueContentModel {
     
     // 设置答案
     func setAnswer(text: String) {
-        while queLevel2.userAnswers.count < index {
+        while queLevel2.userAnswers.count <= index {
             queLevel2.userAnswers.append("")
         }
         queLevel2.userAnswers[index] = text
     }
     
     func getAnswer() -> String {
-        while queLevel2.userAnswers.count < index {
+        while queLevel2.userAnswers.count <= index {
             queLevel2.userAnswers.append("")
         }
         return queLevel2.userAnswers[index]
