@@ -130,12 +130,21 @@ class QueContentSelectModel: NSObject, QueContentModel {
                     allAttrStrArr.append(fillBlankAttrStr)
                 }
             }
+            // 换行样式
+            let itemAttr = "\n".handleUIB(fontSize: 18)
+            itemAttr.addAttributes([
+                .foregroundColor : UIColor.black,
+                .paragraphStyle : style
+            ], range: .init(location: 0, length: itemAttr.length))
+            allAttrStrArr.append(itemAttr)
         }
         
+        let resultAttributed = NSMutableAttributedString()
         for itemAttrStr in allAttrStrArr {
             resultAttributed.append(itemAttrStr)
         }
         resultAttributed.addAttribute(.baselineOffset, value: NSNumber(value: 5), range: .init(location: 0, length: resultAttributed.length))
+        self.resultAttributed = resultAttributed
     }
     
     func setAnswer(optionIndex: Int, index: Int) {

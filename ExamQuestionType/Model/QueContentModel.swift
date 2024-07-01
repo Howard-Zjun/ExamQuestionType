@@ -86,44 +86,44 @@ class QueContentResolver {
     }
     
     static func contentResolver(queLevel1: QueLevel1, queLevel2: QueLevel2) -> [QueContentModel] {
-        var ret: [QueContentModel] = []
+        var tempModels: [QueContentModel] = []
         var queue: [QueLevel2] = [queLevel2]
         var index = 0
         
         let titleModel = QueContentTitleModel(queLevel1: queLevel1)
-        ret.append(titleModel)
+        tempModels.append(titleModel)
         
         while index < queue.count {
             let model = queue[index]
                 
             if model.type == .essay {
-                ret += essayResolver(queLevel2: model)
+                tempModels += essayResolver(queLevel2: model)
             } else if model.type == .FillBlank {
-                ret += fillBlankResolver(queLevel2: model)
+                tempModels += fillBlankResolver(queLevel2: model)
             } else if model.type == .Select {
-                ret += selectResolver(queLevel2: model)
+                tempModels += selectResolver(queLevel2: model)
             } else {
                 guard let data = model.content?.data(using: .utf8) else {
-                    return ret
+                    continue
                 }
                 let hpple = TFHpple(data: data, isXML: false)
                 guard let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] else {
-                    return ret
+                    continue
                 }
                 
                 for element in elements {
                     for item in (element.children as? [TFHppleElement]) ?? [] {
                         if item.tagName == "text" {
                             if let describeModel = QueContentDescribeModel(html: item.content) {
-                                ret.append(describeModel)
+                                tempModels.append(describeModel)
                             }
                         } else if item.tagName == "img" {
                             if let imgModel = QueContentImgModel(html: item.raw) {
-                                ret.append(imgModel)
+                                tempModels.append(imgModel)
                             }
                         } else if item.tagName == "table" {
                             if let tableModel = QueContentTableModel(html: item.raw) {
-                                ret.append(tableModel)
+                                tempModels.append(tableModel)
                             }
                         }
                     }
@@ -137,6 +137,37 @@ class QueContentResolver {
             index += 1
         }
         
-        return ret
+        var right = 0
+        var retModels: [QueContentModel] = []
+        var content = ""
+        // 将 QueContentDescribeModel 整合
+        while right < tempModels.count {
+            if let describeModel = tempModels[right] as? QueContentDescribeModel {
+                content = content + describeModel.handleContent!
+            } else {
+                if !content.isEmpty {
+                    // 去掉末尾的换行
+                    while content.hasSuffix("\n") {
+                        content = (content as NSString).substring(with: .init(location: 0, length: content.count - 1)) // \n 算一个字符
+                    }
+                    if let describeModel = QueContentDescribeModel(html: content) {
+                        retModels.append(describeModel)
+                    } else {
+                        print("\(NSStringFromClass(Self.self)) \(#function) 转换失败失败: \(content)")
+                    }
+                    content = ""
+                }
+                retModels.append(tempModels[right])
+            }
+            right += 1
+        }
+        if !content.isEmpty {
+            if let describeModel = QueContentDescribeModel(html: content) {
+                retModels.append(describeModel)
+            } else {
+                print("\(NSStringFromClass(Self.self)) \(#function) 转换失败失败: \(content)")
+            }
+        }
+        return retModels
     }
 }

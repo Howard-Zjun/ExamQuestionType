@@ -106,8 +106,8 @@ extension String {
         return ret
     }
     
+    /// 下划线、斜体、加粗样式
     func handleUIB(fontSize: CGFloat) -> NSMutableAttributedString {
-        // 下划线、斜体、加粗样式
         let regex = try! NSRegularExpression(pattern: "(<u>)|(</u>)|(<i>)|(</i>)|(<b>)|(</b>)")
         var uArr: [Int] = []
         var iArr: [Int] = []
@@ -129,10 +129,6 @@ extension String {
                 locationOffset -= range.length
             }
         }
-        
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 5
-        paragraphStyle.paragraphSpacing = 5
         
         let attr = NSMutableAttributedString(string: text, attributes: [
             .font : UIFont.systemFont(ofSize: fontSize),

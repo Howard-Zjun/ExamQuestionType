@@ -75,7 +75,11 @@ extension QueContentImgModel {
                 }
             }
             
-            return ret
+            if ret.isEmpty {
+                return []
+            } else {
+                return ret
+            }
         }
     }
 }

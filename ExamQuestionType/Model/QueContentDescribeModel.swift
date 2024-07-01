@@ -22,22 +22,24 @@ class QueContentDescribeModel: NSObject, QueContentModel {
             return nil
         }
         let hpple = TFHpple(data: data, isXML: false)
-        guard let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] else {
-            return nil
-        }
-        
-        var text = ""
-        for element in elements {
-            // 去掉<p></p>
-            if let raw = element.raw {
-                let content = (element.raw as NSString).substring(with: .init(location: 3, length: raw.count - 3 - 4))
-                text += content + "\n"
+        if let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] {
+            var text = ""
+            for element in elements {
+                // 去掉<p></p>
+                if let raw = element.raw {
+                    let content = (element.raw as NSString).substring(with: .init(location: 3, length: raw.count - 3 - 4))
+                    text += content + "\n"
+                }
             }
+            
+            let attr = text.handleUIB(fontSize: 16)
+            
+            self.attr = attr
+        } else {
+            let attr = html.handleUIB(fontSize: 16)
+            
+            self.attr = attr
         }
-        
-        let attr = text.handleUIB(fontSize: 16)
-        
-        self.attr = attr
     }
     
     convenience init?(queLevel2: QueLevel2) {
