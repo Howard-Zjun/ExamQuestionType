@@ -67,63 +67,12 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         self.queLevel2 = queLevel2
         super.init()
         
-        var fillBlankIndex = 0
-        for element in elements {
-            for item in (element.children as? [TFHppleElement]) ?? [] {
-                if item.tagName == "text" {
-                    let attr = item.content.handleUIB(fontSize: 18)
-                    attr.addAttributes([
-                        .foregroundColor : UIColor.black
-                    ], range: .init(location: 0, length: attr.length))
-                    allAttrStrArr.append(attr)
-                } else if item.tagName == "img" {
-                    if let imgModels = QueContentImgModel.ImgModel.load(html: item.raw) {
-                        
-                        for imgModel in imgModels {
-                            allAttrStrArr.append(NSMutableAttributedString()) // 占位
-                            let index = allAttrStrArr.count - 1
-                            SDWebImageManager.shared.loadImage(with: imgModel.src, progress: nil) { [weak self] img, data, _, _, _, _ in
-                                guard let self = self, let img = img else { return }
-                                let attachment = NSTextAttachment(image: img)
-                                let width = imgModel.width ?? img.size.width
-                                let height = imgModel.height ?? img.size.height
-                                attachment.bounds = .init(x: 0, y: 0, width: width, height: height)
-                                
-                                let imgAttr = NSMutableAttributedString(attachment: attachment)
-                                
-                                allAttrStrArr[index] = imgAttr
-                                makeResultAttr()
-                                
-                                delegate?.contentDidChange(model: self)
-                            }
-                        }
-                    }
-                } else if item.tagName == "blk" {
-                    var enterStr = spaceStr
-                    var haveAnswer = false
-                    if fillBlankIndex < queLevel2.userAnswers.count, !queLevel2.userAnswers[fillBlankIndex].isEmpty {
-                        enterStr = queLevel2.userAnswers[fillBlankIndex]
-                        haveAnswer = true
-                    }
-                    
-                    let fillBlankAttrStr: NSMutableAttributedString!
-                    if haveAnswer {
-                        fillBlankAttrStr = NSMutableAttributedString(string: enterStr, attributes: [
-                            .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-                            .underlineColor : UIColor.black,
-                            .link : "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)",
-                            .font : UIFont.systemFont(ofSize: 18),
-                            .foregroundColor : UIColor.blue,
-                        ])
-                    } else {
-                        fillBlankAttrStr = NSAttributedString.emptyFillBlankAttrStr(index: fillBlankIndex)
-                    }
-                    
-                    fillBlankIndex += 1
-                    
-                    fillBlankAttrStrArr.append(fillBlankAttrStr)
-                    allAttrStrArr.append(fillBlankAttrStr)
-                }
+        (fillBlankAttrStrArr, allAttrStrArr) = resolver(html: html, fillBlankOffset: 0)
+        // 去掉末尾换行
+        while let last = allAttrStrArr.last, last.string.hasSuffix("\n") {
+            last.replaceCharacters(in: .init(location: last.length - 1, length: 1), with: "")
+            if last.string.isEmpty {
+                allAttrStrArr.removeLast()
             }
         }
         
@@ -231,4 +180,91 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         resultAttributed.addAttribute(.paragraphStyle, value: style, range: .init(location: 0, length: resultAttributed.length))
         self.resultAttributed = resultAttributed
     }
+    
+    func resolver(html: String, fillBlankOffset: Int) -> ([NSMutableAttributedString], [NSMutableAttributedString]) {
+        let pRegex = try! NSRegularExpression(pattern: "(<blk.*?</blk>)|(<img.*?>)|(<p>.*?</p>)")
+        
+        var fillBlankAttrArr: [NSMutableAttributedString] = []
+        var allAttrArr: [NSMutableAttributedString] = []
+        
+        var lastIndex = 0
+        
+        pRegex.enumerateMatches(in: html, range: .init(location: 0, length: html.count)) { match, _, _ in
+            guard let range = match?.range else { return }
+            if range.location != lastIndex { // 有未识别内容
+                let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
+                
+                allAttrArr.append(.init(string: noHandleStr, attributes: [
+                    .font : UIFont.systemFont(ofSize: 18),
+                    .paragraphStyle : paragraphStyle
+                ]))
+            }
+            let tempStr = (html as NSString).substring(with: range)
+            if tempStr.hasPrefix("<p") {
+                let content = (tempStr as NSString).substring(with: .init(location: 3, length: tempStr.count - 3 - 4)) // 去掉<p></p>
+                let tempRet = resolver(html: content, fillBlankOffset: fillBlankOffset + fillBlankAttrArr.count)
+                fillBlankAttrArr += tempRet.0
+                allAttrArr += tempRet.1
+                allAttrArr.append(.init(string: "\n", attributes: [
+                    .font : UIFont.systemFont(ofSize: 18),
+                    .paragraphStyle : paragraphStyle,
+                ]))
+            } else if tempStr.hasPrefix("<blk") {
+                let fillBlankIndex = fillBlankOffset + fillBlankAttrArr.count
+                var enterStr = spaceStr
+                var haveAnswer = false
+                if let count = qst.qst_detail?.userAnswer.count, fillBlankIndex < count, let answer = qst.qst_detail?.userAnswer[fillBlankIndex], !answer.isEmpty {
+                    enterStr = answer
+                    haveAnswer = true
+                }
+                
+                let fillBlankAttrStr: NSMutableAttributedString!
+                if haveAnswer {
+                    fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: 18), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", paragraphStyle: paragraphStyle)
+                } else {
+                    fillBlankAttrStr = .emptyFillBlankAttrStr(index: fillBlankIndex, paragraphStyle: paragraphStyle)
+                }
+                fillBlankAttrArr.append(fillBlankAttrStr)
+                allAttrArr.append(fillBlankAttrStr)
+            } else if tempStr.hasPrefix("<img") {
+                if let imgModels = QueContentImgModel.ImgModel.load(html: tempStr) {
+                    for imgModel in imgModels {
+                        
+                        allAttrArr.append(.init()) // 占位
+                        let index = allAttrArr.count - 1
+                        
+                        SDWebImageManager.shared.loadImage(with: imgModel.src, progress: nil) { [weak self] img, data, _, _, _, url in
+                            print("\(NSStringFromClass(Self.self)) \(#function) 线程: \(Thread.current) 图片链接: \(String(describing: url)) 替换下标: \(index)")
+                            guard let self = self, let img = img else { return }
+                            let attachment = NSTextAttachment(image: img)
+                            let width = imgModel.width ?? img.size.width
+                            let height = imgModel.height ?? img.size.height
+                            attachment.bounds = .init(x: 0, y: 0, width: width, height: height)
+                            
+                            let imgAttr = NSMutableAttributedString(attachment: attachment)
+                            
+                            allAttrArr[index] = imgAttr
+                            makeResultAttr()
+                            
+                            delegate?.contentDidChange(model: self)
+                        }
+                    }
+                }
+            }
+            
+            lastIndex = range.location + range.length
+        }
+        
+        if lastIndex < html.count { // 后面有未识别的内容
+            let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
+            
+            allAttrArr.append(.init(string: noHandleStr, attributes: [
+                .font : UIFont.systemFont(ofSize: 18),
+                .paragraphStyle : paragraphStyle
+            ]))
+        }
+        
+        return (fillBlankAttrArr, allAttrArr)
+    }
+
 }
