@@ -109,37 +109,60 @@ extension String {
     
     /// 下划线、斜体、加粗样式
     func handleUIB(fontSize: CGFloat, foregroundColor: UIColor = .black, paragraphStyle: NSParagraphStyle = .default, baselineOffset: Int = 0) -> NSMutableAttributedString {
-        let regex = try! NSRegularExpression(pattern: "(<u>.*?</u>)|(<i>.*?</i>)|(<b>.*?</b>)")
-
-        var locationOffset = 0
+        let uRegex = try! NSRegularExpression(pattern: "<u>.*?</u>")
+        var uOffset = 0
 
         let attr = NSMutableAttributedString(string: self, attributes: [
             .font : UIFont.systemFont(ofSize: fontSize),
         ])
         
-        regex.enumerateMatches(in: self, options: [], range: .init(location: 0, length: self.count)) { match, _, _ in
+        uRegex.enumerateMatches(in: attr.string, options: [], range: .init(location: 0, length: attr.length)) { match, _, _ in
             if let range = match?.range {
-                let originContent = (self as NSString).substring(with: range)
+                let originContent = (attr.string as NSString).substring(with: .init(location: uOffset + range.location, length: range.length))
                 let content = (originContent as NSString).substring(with: .init(location: 3, length: originContent.count - 3 - 4)) // 去掉前后标签
                 
-                attr.replaceCharacters(in: .init(location: locationOffset + range.location, length: range.length), with: content)
+                attr.replaceCharacters(in: .init(location: uOffset + range.location, length: range.length), with: content)
 
-                if originContent.hasPrefix("<u>") {
-                    attr.addAttributes([
-                        .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-                        .underlineColor : UIColor.black,
-                    ], range: .init(location: locationOffset + range.location, length: content.count))
-                } else if originContent.hasPrefix("<i>") {
-                    attr.addAttributes([
-                        .obliqueness : NSNumber(value: 0.5),
-                    ], range: .init(location: locationOffset + range.location, length: content.count))
-                } else if originContent.hasPrefix("<b>") {
-                    attr.addAttributes([
-                        .font : UIFont.systemFont(ofSize: fontSize, weight: .bold),
-                    ], range: .init(location: locationOffset + range.location, length: content.count))
-                }
+                attr.addAttributes([
+                    .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
+                    .underlineColor : UIColor.black,
+                ], range: .init(location: uOffset + range.location, length: content.count))
                 
-                locationOffset = locationOffset + (content.count - originContent.count)
+                uOffset = uOffset + (content.count - originContent.count)
+            }
+        }
+        
+        let iRegex = try! NSRegularExpression(pattern: "<i>.*?</i>")
+        var iOffset = 0
+        iRegex.enumerateMatches(in: attr.string, options: [], range: .init(location: 0, length: attr.length)) { match, _, _ in
+            if let range = match?.range {
+                let originContent = (attr.string as NSString).substring(with: .init(location: iOffset + range.location, length: range.length))
+                let content = (originContent as NSString).substring(with: .init(location: 3, length: originContent.count - 3 - 4)) // 去掉前后标签
+                
+                attr.replaceCharacters(in: .init(location: iOffset + range.location, length: range.length), with: content)
+
+                attr.addAttributes([
+                    .obliqueness : NSNumber(value: 0.5),
+                ], range: .init(location: iOffset + range.location, length: content.count))
+                
+                iOffset = iOffset + (content.count - originContent.count)
+            }
+        }
+        
+        let bRegex = try! NSRegularExpression(pattern: "<b>.*?</b>")
+        var bOffset = 0
+        bRegex.enumerateMatches(in: attr.string, options: [], range: .init(location: 0, length: attr.length)) { match, _, _ in
+            if let range = match?.range {
+                let originContent = (attr.string as NSString).substring(with: .init(location: bOffset + range.location, length: range.length))
+                let content = (originContent as NSString).substring(with: .init(location: 3, length: originContent.count - 3 - 4)) // 去掉前后标签
+                
+                attr.replaceCharacters(in: .init(location: bOffset + range.location, length: range.length), with: content)
+
+                attr.addAttributes([
+                    .font : UIFont.systemFont(ofSize: fontSize, weight: .bold),
+                ], range: .init(location: bOffset + range.location, length: content.count))
+                
+                bOffset = bOffset + (content.count - originContent.count)
             }
         }
         
