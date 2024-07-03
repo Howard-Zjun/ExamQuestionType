@@ -23,9 +23,9 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     let queLevel2: QueLevel2
     
-    var fillBlankAttrStrArr: [NSMutableAttributedString]
+    var fillBlankAttrArr: [NSMutableAttributedString]
     
-    var allAttrStrArr: [NSMutableAttributedString]
+    var allAttrArr: [NSMutableAttributedString]
     
     var resultAttributed: NSMutableAttributedString
     
@@ -33,46 +33,42 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     var focunsIndex: Int? {
         didSet {
-            if let focunsIndex = oldValue, focunsIndex < fillBlankAttrStrArr.count {
+            if let focunsIndex = oldValue, focunsIndex < fillBlankAttrArr.count {
                 if getAnswer(index: focunsIndex) == nil {
                     let newFillBlankStr = NSAttributedString.emptyFillBlankAttrStr(index: focunsIndex)
-                    let oldFillBlankStr = fillBlankAttrStrArr[focunsIndex]
-                    let itemInAllIndex = (allAttrStrArr as NSArray).index(of: oldFillBlankStr)
-                    fillBlankAttrStrArr[focunsIndex] = newFillBlankStr
-                    allAttrStrArr[itemInAllIndex] = newFillBlankStr
+                    let oldFillBlankStr = fillBlankAttrArr[focunsIndex]
+                    let itemInAllIndex = (allAttrArr as NSArray).index(of: oldFillBlankStr)
+                    fillBlankAttrArr[focunsIndex] = newFillBlankStr
+                    allAttrArr[itemInAllIndex] = newFillBlankStr
                 }
-                fillBlankAttrStrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor.black, range: .init(location: 0, length: fillBlankAttrStrArr[focunsIndex].length))
+                fillBlankAttrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor.black, range: .init(location: 0, length: fillBlankAttrArr[focunsIndex].length))
             }
-            if let focunsIndex = focunsIndex, focunsIndex < fillBlankAttrStrArr.count  {
+            if let focunsIndex = focunsIndex, focunsIndex < fillBlankAttrArr.count  {
                 if getAnswer(index: focunsIndex) == nil {
-                    fillBlankAttrStrArr[focunsIndex].replaceCharacters(in: .init(location: 1, length: 1), with: "⌘")
+                    fillBlankAttrArr[focunsIndex].replaceCharacters(in: .init(location: 1, length: 1), with: "⌘")
                 }
-                fillBlankAttrStrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor(hex: 0x2F81FB), range: .init(location: 0, length: fillBlankAttrStrArr[focunsIndex].length))
+                fillBlankAttrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor(hex: 0x2F81FB), range: .init(location: 0, length: fillBlankAttrArr[focunsIndex].length))
             }
             makeResultAttr()
         }
     }
     
     init?(queLevel2: QueLevel2) {
-        guard let content = queLevel2.content, let data = content.data(using: .utf8) else {
+        guard let html = queLevel2.content else {
             return nil
         }
-        let hpple = TFHpple(data: data, isXML: false)
-        guard let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] else {
-            return nil
-        }
-        self.allAttrStrArr = []
-        self.fillBlankAttrStrArr = []
+        self.allAttrArr = []
+        self.fillBlankAttrArr = []
         self.resultAttributed = .init()
         self.queLevel2 = queLevel2
         super.init()
         
-        (fillBlankAttrStrArr, allAttrStrArr) = resolver(html: html, fillBlankOffset: 0)
+        (fillBlankAttrArr, allAttrArr) = resolver(html: html, fillBlankOffset: 0)
         // 去掉末尾换行
-        while let last = allAttrStrArr.last, last.string.hasSuffix("\n") {
+        while let last = allAttrArr.last, last.string.hasSuffix("\n") {
             last.replaceCharacters(in: .init(location: last.length - 1, length: 1), with: "")
             if last.string.isEmpty {
-                allAttrStrArr.removeLast()
+                allAttrArr.removeLast()
             }
         }
         
@@ -114,10 +110,10 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             ])
         }
         
-        let oldFillBlank = fillBlankAttrStrArr[index]
-        let fillBlankIndex = (allAttrStrArr as NSArray).index(of: oldFillBlank)
-        fillBlankAttrStrArr[index] = newFillBlank
-        allAttrStrArr[fillBlankIndex] = newFillBlank
+        let oldFillBlank = fillBlankAttrArr[index]
+        let fillBlankIndex = (allAttrArr as NSArray).index(of: oldFillBlank)
+        fillBlankAttrArr[index] = newFillBlank
+        allAttrArr[fillBlankIndex] = newFillBlank
         
         makeResultAttr()
     }
@@ -170,7 +166,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     func makeResultAttr() {
         let resultAttributed = NSMutableAttributedString()
-        for itemAttrStr in allAttrStrArr {
+        for itemAttrStr in allAttrArr {
             resultAttributed.append(itemAttrStr)
         }
         resultAttributed.addAttribute(.baselineOffset, value: NSNumber(value: 5), range: .init(location: 0, length: resultAttributed.length))
@@ -182,6 +178,10 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     }
     
     func resolver(html: String, fillBlankOffset: Int) -> ([NSMutableAttributedString], [NSMutableAttributedString]) {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 5
+        paragraphStyle.paragraphSpacing = 5
+        
         let pRegex = try! NSRegularExpression(pattern: "(<blk.*?</blk>)|(<img.*?>)|(<p>.*?</p>)")
         
         var fillBlankAttrArr: [NSMutableAttributedString] = []
@@ -191,17 +191,18 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         
         pRegex.enumerateMatches(in: html, range: .init(location: 0, length: html.count)) { match, _, _ in
             guard let range = match?.range else { return }
+            
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
                 
-                allAttrArr.append(.init(string: noHandleStr, attributes: [
-                    .font : UIFont.systemFont(ofSize: 18),
-                    .paragraphStyle : paragraphStyle
-                ]))
+                allAttrArr.append(noHandleStr.handleUIB(fontSize: 18, paragraphStyle: paragraphStyle))
             }
+            
             let tempStr = (html as NSString).substring(with: range)
+            
             if tempStr.hasPrefix("<p") {
                 let content = (tempStr as NSString).substring(with: .init(location: 3, length: tempStr.count - 3 - 4)) // 去掉<p></p>
+                
                 let tempRet = resolver(html: content, fillBlankOffset: fillBlankOffset + fillBlankAttrArr.count)
                 fillBlankAttrArr += tempRet.0
                 allAttrArr += tempRet.1
@@ -213,8 +214,8 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
                 let fillBlankIndex = fillBlankOffset + fillBlankAttrArr.count
                 var enterStr = spaceStr
                 var haveAnswer = false
-                if let count = qst.qst_detail?.userAnswer.count, fillBlankIndex < count, let answer = qst.qst_detail?.userAnswer[fillBlankIndex], !answer.isEmpty {
-                    enterStr = answer
+                if fillBlankIndex < queLevel2.userAnswers.count, !queLevel2.userAnswers[fillBlankIndex].isEmpty {
+                    enterStr = queLevel2.userAnswers[fillBlankIndex]
                     haveAnswer = true
                 }
                 
@@ -258,10 +259,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(.init(string: noHandleStr, attributes: [
-                .font : UIFont.systemFont(ofSize: 18),
-                .paragraphStyle : paragraphStyle
-            ]))
+            allAttrArr.append(noHandleStr.handleUIB(fontSize: 18, paragraphStyle: paragraphStyle))
         }
         
         return (fillBlankAttrArr, allAttrArr)

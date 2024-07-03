@@ -17,11 +17,15 @@ class QueContentImgModel: NSObject, QueContentModel {
     
     let imageModel: ImgModel
     
-    init?(html: String) {
+    init(model: ImgModel) {
+        self.imageModel = model
+    }
+    
+    convenience init?(html: String) {
         guard let model = ImgModel.load(html: html)?.first else {
             return nil
         }
-        self.imageModel = model
+        self.init(model: model)
     }
     
     convenience init?(queLevel2: QueLevel2) {

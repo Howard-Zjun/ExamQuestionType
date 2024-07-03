@@ -26,7 +26,7 @@ class QueContentDescribeModel: NSObject, QueContentModel {
             return nil
         }
         let hpple = TFHpple(data: data, isXML: false)
-        if let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] {
+        if html.contains("</p>"), let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] {
             var text = ""
             for (elementIndex, element) in elements.enumerated() {
                 // 去掉<p></p>

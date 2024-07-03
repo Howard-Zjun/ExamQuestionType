@@ -53,7 +53,7 @@ extension UIColor {
 
 extension NSAttributedString {
     
-    static func emptyFillBlankAttrStr(index: Int, isFocus: Bool = false) -> NSMutableAttributedString {
+    static func emptyFillBlankAttrStr(index: Int, isFocus: Bool = false, paragraphStyle: NSParagraphStyle = .default) -> NSMutableAttributedString {
         // 只能逐个添加，使用 addAttribute 添加附件没有效果
         let ret = NSMutableAttributedString()
         ret.append(.init(string: "⌘"))
@@ -74,6 +74,7 @@ extension NSAttributedString {
             .link : "\(snFillBlankURLPrefix)\(snSeparate)\(index)",
             .font : UIFont.systemFont(ofSize: 18),
             .foregroundColor : UIColor.clear,
+            .paragraphStyle : paragraphStyle,
         ], range: .init(location: 0, length: ret.length))
         return ret
     }
@@ -107,67 +108,71 @@ extension String {
     }
     
     /// 下划线、斜体、加粗样式
-    func handleUIB(fontSize: CGFloat) -> NSMutableAttributedString {
-        let regex = try! NSRegularExpression(pattern: "(<u>)|(</u>)|(<i>)|(</i>)|(<b>)|(</b>)")
-        var uArr: [Int] = []
-        var iArr: [Int] = []
-        var bArr: [Int] = []
+    func handleUIB(fontSize: CGFloat, foregroundColor: UIColor = .black, paragraphStyle: NSParagraphStyle = .default, baselineOffset: Int = 0) -> NSMutableAttributedString {
+        let regex = try! NSRegularExpression(pattern: "(<u>.*?</u>)|(<i>.*?</i>)|(<b>.*?</b>)")
+
         var locationOffset = 0
+
+        let attr = NSMutableAttributedString(string: self, attributes: [
+            .font : UIFont.systemFont(ofSize: fontSize),
+        ])
         
-        var text = self
-        regex.enumerateMatches(in: text, options: [], range: .init(location: 0, length: text.count)) { match, _, _ in
+        regex.enumerateMatches(in: self, options: [], range: .init(location: 0, length: self.count)) { match, _, _ in
             if let range = match?.range {
-                let subStr = (text as NSString).substring(with: range)
-                if subStr.contains("u") {
-                    uArr.append(locationOffset + range.location)
-                } else if subStr.contains("i") {
-                    iArr.append(locationOffset + range.location)
-                } else if subStr.contains("b") {
-                    bArr.append(locationOffset + range.location)
+                let originContent = (self as NSString).substring(with: range)
+                let content = (originContent as NSString).substring(with: .init(location: 3, length: originContent.count - 3 - 4)) // 去掉前后标签
+                
+                attr.replaceCharacters(in: .init(location: locationOffset + range.location, length: range.length), with: content)
+
+                if originContent.hasPrefix("<u>") {
+                    attr.addAttributes([
+                        .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
+                        .underlineColor : UIColor.black,
+                    ], range: .init(location: locationOffset + range.location, length: content.count))
+                } else if originContent.hasPrefix("<i>") {
+                    attr.addAttributes([
+                        .obliqueness : NSNumber(value: 0.5),
+                    ], range: .init(location: locationOffset + range.location, length: content.count))
+                } else if originContent.hasPrefix("<b>") {
+                    attr.addAttributes([
+                        .font : UIFont.systemFont(ofSize: fontSize, weight: .bold),
+                    ], range: .init(location: locationOffset + range.location, length: content.count))
                 }
-                text = (text as NSString).replacingCharacters(in: range, with: "")
-                locationOffset -= range.length
+                
+                locationOffset = locationOffset + (content.count - originContent.count)
             }
         }
         
-        let attr = NSMutableAttributedString(string: text, attributes: [
-            .font : UIFont.systemFont(ofSize: fontSize),
-            .foregroundColor : UIColor.black,
-            .baselineOffset : NSNumber(value: 5)
-        ])
-    
-        var uindex = 1
-        while uindex < uArr.count {
-            let start = uArr[uindex - 1]
-            let end = uArr[uindex]
-            attr.addAttributes([
-                .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-                .underlineColor : UIColor.black
-            ], range: .init(location: start, length: end - start))
-            uindex += 2
-        }
-        
-        var iindex = 1
-        while iindex < iArr.count {
-            let start = iArr[iindex - 1]
-            let end = iArr[iindex]
-            attr.addAttributes([
-                .obliqueness : NSNumber(value: 0.5)
-            ], range: .init(location: start, length: end - start))
-            iindex += 2
-        }
-        
-        var bindex = 1
-        while bindex < bArr.count {
-            let start = bArr[bindex - 1]
-            let end = bArr[bindex]
-            attr.addAttributes([
-                .font : UIFont.systemFont(ofSize: fontSize, weight: .bold)
-            ], range: .init(location: start, length: end - start))
-            bindex += 2
-        }
-        
+        attr.addAttributes([
+            .foregroundColor : foregroundColor,
+            .baselineOffset : NSNumber(value: baselineOffset)
+        ], range: .init(location: 0, length: attr.length))
+
         return attr
+    }
+    
+    func fillBlankAttr(font: UIFont, link: String, foregroundColor: UIColor = .black,paragraphStyle: NSParagraphStyle = .default) -> NSMutableAttributedString {
+        let ret = NSMutableAttributedString()
+        ret.append(.init(string: "⌘", attributes: [
+            .foregroundColor : UIColor.clear
+        ]))
+        
+        ret.append(.init(string: self, attributes: [
+            .foregroundColor : foregroundColor
+        ]))
+        
+        ret.append(.init(string: "⌘", attributes: [
+            .foregroundColor : UIColor.clear
+        ]))
+        
+        ret.addAttributes([
+            .font : font,
+            .link : link,
+            .underlineColor : UIColor.black,
+            .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
+            .paragraphStyle : paragraphStyle
+        ], range: .init(location: 0, length: ret.length))
+        return ret
     }
 }
 

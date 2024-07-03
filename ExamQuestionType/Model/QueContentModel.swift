@@ -22,54 +22,90 @@ protocol QueContentModel {
 class QueContentResolver {
     
     static func essayResolver(queLevel2: QueLevel2) -> [QueContentModel] {
-        guard queLevel2.type == .essay, let content = queLevel2.content else {
+        guard queLevel2.type == .essay, let html = queLevel2.content else {
             return []
         }
+        
+        let tempRet = essayResolver(queLevel2: queLevel2, html: html, essayOffset: 0)
         var ret: [QueContentModel] = []
+        
+        var left = 0, right = 0
+        while right < tempRet.count {
+            if !(tempRet[right] is QueContentDescribeModel) {
+                // 将文字描述整合
+                if left != right {
+                    let attr = NSMutableAttributedString()
+                    
+                    for index in left..<right {
+                        let describeModel = tempRet[index] as! QueContentDescribeModel
+                        attr.append(describeModel.attr)
+                    }
+                    
+                    // 去掉末尾换行
+                    while attr.string.hasSuffix("\n") {
+                        attr.replaceCharacters(in: .init(location: attr.length - 1, length: 1), with: "")
+                    }
+                    let describeModel = QueContentDescribeModel(attr: attr)
+                    ret.append(describeModel)
+                }
+             
+                
+                ret.append(tempRet[right])
+                
+                right += 1
+                left = right
+            } else {
+                right += 1
+            }
+        }
+        
+        if left != right {
+            let attr = NSMutableAttributedString()
+            
+            for index in left..<right {
+                let describeModel = tempRet[index] as! QueContentDescribeModel
+                attr.append(describeModel.attr)
+            }
+            
+            // 去掉末尾换行
+            while attr.string.hasSuffix("\n") {
+                attr.replaceCharacters(in: .init(location: attr.length - 1, length: 1), with: "")
+            }
+            let describeModel = QueContentDescribeModel(attr: attr)
+            ret.append(describeModel)
+        }
+            
+        return ret
+    }
+    
+    static func essayResolver(queLevel2: QueLevel2, html: String, essayOffset: Int) -> [QueContentModel] {
+        var ret: [QueContentModel] = []
+        let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p>.*?</p>)")
+        
+        var lastIndex = 0
         
         var essayIndex = 0
         
-        let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<p>.*?</p>)")
-        let essayContentRange = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|<blk.*?</blk>")
-        pRegex.enumerateMatches(in: content, range: .init(location: 0, length: content.count)) { match, _, _ in
+        pRegex.enumerateMatches(in: html, range: .init(location: 0, length: html.count)) { match, _, _ in
             guard let range = match?.range else { return }
-            var tempStr = (content as NSString).substring(with: range)
-            if tempStr.hasPrefix("<p") {
-                tempStr = (tempStr as NSString).substring(with: .init(location: 3, length: tempStr.count - 3 - 4)) // 去掉<p></p>
-                var left = 0
-                let contentRanges = essayContentRange.matches(in: tempStr, range: .init(location: 0, length: tempStr.count)).map({ $0.range })
-                for range in contentRanges {
-                    if range.location != left { // 有未识别内容
-                        let subStr = (tempStr as NSString).substring(with: .init(location: left, length: range.location - left))
-                        if let describeModel = QueContentDescribeModel(html: subStr) {
-                            ret.append(describeModel)
-                        }
-                    }
-                    
-                    let subStr = (tempStr as NSString).substring(with: range)
-                    if subStr.hasPrefix("<img") {
-                        if let imgModel = QueContentImgModel(html: subStr) {
-                            ret.append(imgModel)
-                        }
-                    } else if subStr.hasPrefix("<table") {
-                        if let tableModel = QueContentTableModel(html: subStr) {
-                            ret.append(tableModel)
-                        }
-                    } else if subStr.hasPrefix("<blk") {
-                        if let essayModel = QueContentEssayModel(queLevel2: queLevel2, index: essayIndex) {
-                            ret.append(essayModel)
-                            
-                            essayIndex += 1
-                        }
-                    }
-                    left = range.location + range.length
-                }
+            
+            if range.location != lastIndex { // 有未识别内容
+                let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
                 
-                if left < tempStr.count { // 后面有未识别的内容
-                    let subStr = (tempStr as NSString).substring(with: .init(location: left, length: tempStr.count - left))
-                    if let describeModel = QueContentDescribeModel(html: subStr) {
-                        ret.append(describeModel)
-                    }
+                if let describeModel = QueContentDescribeModel(html: noHandleStr) {
+                    ret.append(describeModel)
+                }
+            }
+            
+            let tempStr = (html as NSString).substring(with: range)
+
+            if tempStr.hasPrefix("<p") {
+                let content = (tempStr as NSString).substring(with: .init(location: 3, length: tempStr.count - 3 - 4)) // 去掉<p></p>
+
+                let tempRet = essayResolver(queLevel2: queLevel2, html: content, essayOffset: essayOffset + essayIndex)
+                ret += tempRet
+                if let describeModel = QueContentDescribeModel(html: "\n") {
+                    ret.append(describeModel)
                 }
             } else if tempStr.hasPrefix("<table") {
                 if let tableModel = QueContentTableModel(html: tempStr) {
@@ -79,9 +115,24 @@ class QueContentResolver {
                 if let imgModel = QueContentImgModel(html: tempStr) {
                     ret.append(imgModel)
                 }
+            } else if tempStr.hasPrefix("<blk") {
+                if let essayModel = QueContentEssayModel(queLevel2: queLevel2, index: essayOffset  + essayIndex) {
+                    ret.append(essayModel)
+                    
+                    essayIndex += 1
+                }
             }
+            
+            lastIndex = range.location + range.length
         }
         
+        if lastIndex < html.count { // 后面有未识别的内容
+            let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
+
+            if let describeModel = QueContentDescribeModel(html: noHandleStr) {
+                ret.append(describeModel)
+            }
+        }
         return ret
     }
     
