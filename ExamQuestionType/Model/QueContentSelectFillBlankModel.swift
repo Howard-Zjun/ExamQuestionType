@@ -1,5 +1,5 @@
 //
-//  QueContentFillBlankModel.swift
+//  QueContentSelectFillBlankModel.swift
 //  ListenSpeak
 //
 //  Created by ios on 2024/6/13.
@@ -7,16 +7,10 @@
 
 import UIKit
 
-let snFillBlankURLPrefix = "blank"
-
-let snSeparate = ":"
-
-let spaceStr = "⌘⌘⌘"
-
-class QueContentFillBlankModel: NSObject, QueContentModel {
+class QueContentSelectFillBlankModel: NSObject, QueContentModel {
 
     var cellType: UITableViewCell.Type {
-        QueContentFillBlankCell.self
+        QueContentSelectCell.self
     }
     
     var contentInset: UIEdgeInsets = .zero
@@ -31,13 +25,16 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     let paragraphStyle: NSParagraphStyle
     
+    // 选项
+    let options: [String]
+    
     var delegate: QueContentModelDelegate?
     
     var focunsIndex: Int? {
         didSet {
             if let focunsIndex = oldValue, focunsIndex < fillBlankAttrArr.count {
-                if getAnswer(index: focunsIndex) == nil {
-                    let newFillBlankStr = NSAttributedString.emptyFillBlankAttrStr(index: focunsIndex)
+                if getStrAnswer(index: focunsIndex) == nil { // 聚焦在没有答案的填空消失，添加缺省图标
+                    let newFillBlankStr = NSMutableAttributedString.emptyFillBlankAttrStr(index: focunsIndex, paragraphStyle: paragraphStyle)
                     let oldFillBlankStr = fillBlankAttrArr[focunsIndex]
                     let itemInAllIndex = (allAttrArr as NSArray).index(of: oldFillBlankStr)
                     fillBlankAttrArr[focunsIndex] = newFillBlankStr
@@ -46,8 +43,9 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
                 fillBlankAttrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor.black, range: .init(location: 0, length: fillBlankAttrArr[focunsIndex].length))
             }
             if let focunsIndex = focunsIndex, focunsIndex < fillBlankAttrArr.count  {
-                if getAnswer(index: focunsIndex) == nil {
+                if getStrAnswer(index: focunsIndex) == nil { // 聚焦在没有答案的填空出现，清掉缺省图标
                     fillBlankAttrArr[focunsIndex].replaceCharacters(in: .init(location: 1, length: 1), with: "⌘")
+                    fillBlankAttrArr[focunsIndex].addAttribute(.foregroundColor, value: UIColor.clear, range: .init(location: 0, length: fillBlankAttrArr[focunsIndex].length))
                 }
                 fillBlankAttrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor(hex: 0x2F81FB), range: .init(location: 0, length: fillBlankAttrArr[focunsIndex].length))
             }
@@ -59,19 +57,20 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         let no = queLevel2.no ?? ""
         let content = queLevel2.content ?? ""
         let html = no + content
-        guard !html.isEmpty else {
+        guard queLevel2.type == .Select, let options = queLevel2.options, !html.isEmpty else {
             return nil
         }
-        
+        self.queLevel2 = queLevel2
+        self.options = options
         self.allAttrArr = []
         self.fillBlankAttrArr = []
-        self.resultAttributed = .init()
-        self.queLevel2 = queLevel2
+        self.resultAttributed = NSMutableAttributedString()
         let style = NSMutableParagraphStyle()
         style.lineSpacing = 5
         style.paragraphSpacing = 5
         self.paragraphStyle = style
         super.init()
+        
         
         if isResult {
             resolverResult(html: html, userAnswers: queLevel2.userAnswers, correctAnswers: queLevel2.correctAnswers ?? [])
@@ -90,93 +89,34 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         makeResultAttr()
     }
     
-    func setAnswer(text: String) {
-        updateAttributed(text: text)
-        updateStoreData(text: text)
-    }
-    
-    func getAnswer(index: Int) -> String? {
-        while let count2 = queLevel2.correctAnswers?.count, queLevel2.userAnswers.count < count2 {
+    func setAnswer(optionIndex: Int, index: Int) {
+        while let count = queLevel2.correctAnswers?.count, queLevel2.userAnswers.count < count {
             queLevel2.userAnswers.append("")
         }
-        if !queLevel2.userAnswers[index].isEmpty {
-            return queLevel2.userAnswers[index]
-        }
-        return nil
-    }
-    
-    private func updateAttributed(text: String) {
-        guard let index = focunsIndex else {
-            print("\(NSStringFromClass(Self.self)) \(#function): 未选择填空")
-            return
-        }
-        let newFillBlank: NSMutableAttributedString!
-        var text = text
-        if text.isEmpty { // 若是没有内容则变为空的内容
-            text = spaceStr
-            newFillBlank = NSAttributedString.emptyFillBlankAttrStr(index: index)
-        } else {
-            newFillBlank = .init(string: text, attributes: [
-                .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-                .underlineColor : UIColor.blue,
-                .link : "\(snFillBlankURLPrefix)\(snSeparate)\(index)",
-                .font : UIFont.systemFont(ofSize: 18),
-                .foregroundColor : UIColor.blue,
-            ])
-        }
+        queLevel2.userAnswers[index] = Tool.positionToLetter(position: optionIndex)
         
-        let oldFillBlank = fillBlankAttrArr[index]
-        let fillBlankIndex = (allAttrArr as NSArray).index(of: oldFillBlank)
-        fillBlankAttrArr[index] = newFillBlank
-        allAttrArr[fillBlankIndex] = newFillBlank
-        
+        fillBlankAttrArr[index].replaceCharacters(in: .init(location: 1, length: 1), with: Tool.positionToLetter(position: optionIndex))
+        fillBlankAttrArr[index].addAttribute(.foregroundColor, value: UIColor.blue, range: .init(location: 1, length: 1))
         makeResultAttr()
     }
     
-    private func updateStoreData(text: String) {
-        guard let index = focunsIndex else {
-            print("\(NSStringFromClass(Self.self)) \(#function): 未选择填空")
-            return
+    func getAnswer(index: Int) -> Int? {
+        if let str = getStrAnswer(index: index) {
+            return Tool.letterToPosition(letter: str)
+        } else {
+            return nil
         }
-        while let count2 = queLevel2.correctAnswers?.count, queLevel2.userAnswers.count < count2 {
-            queLevel2.userAnswers.append("")
-        }
-        print("\(NSStringFromClass(Self.self)) \(#function) text: \(text)")
-        queLevel2.userAnswers[index] = text
     }
     
-    func updateScore() {
-        var qsScore = Float(queLevel2.score) / Float(queLevel2.correctAnswers?.count ?? 1)
-        if queLevel2.correctAnswers?.count == 1 {
-            qsScore = Float(queLevel2.score)
+    func getStrAnswer(index: Int) -> String? {
+        if index >= queLevel2.userAnswers.count {
+            return nil
         }
-        
-        var total = 0.0
-        var correct = 0
-        for (index, userAnswer) in queLevel2.userAnswers.enumerated() {
-            let correctAnswers = queLevel2.correctAnswers?[index]
-            if let correctAnswer = correctAnswers?.components(separatedBy: "/") {
-                if correctAnswer.count > 1 {
-                    for answer in correctAnswer {
-                        if answer.removeSpace() == userAnswer.removeSpace() {
-                            total += Double(qsScore)
-                            correct += 1
-                            break
-                        }
-                    }
-                } else {
-                    if correctAnswers?.removeSpace() == userAnswer.removeSpace(){
-                        total += Double(qsScore)
-                        correct += 1
-                    }
-                }
-            }
+        if !queLevel2.userAnswers[index].isEmpty {
+            return queLevel2.userAnswers[index]
+        } else {
+            return nil
         }
-        if correct == queLevel2.userAnswers.count {
-            total = queLevel2.score
-        }
-        queLevel2.userScore = total
-        print("\(NSStringFromClass(Self.self)) \(#function) score:\(total)")
     }
     
     func makeResultAttr() {
@@ -191,13 +131,10 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         resultAttributed.addAttribute(.paragraphStyle, value: style, range: .init(location: 0, length: resultAttributed.length))
         self.resultAttributed = resultAttributed
     }
-    
+
+    // MARK: - resolver
     func resolver(html: String, userAnswers: [String]) {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 5
-        paragraphStyle.paragraphSpacing = 5
-        
-        let pRegex = try! NSRegularExpression(pattern: "(<blk.*?</blk>)|(<img.*?>)|(<p>.*?</p>)")
+        let pRegex = try! NSRegularExpression(pattern: "(<blk.*?</blk>)|(<img.*?>)|(<p.*?</p>)")
         
         var lastIndex = 0
         
@@ -206,12 +143,10 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
-                
-                allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag] ,fontSize: 18, paragraphStyle: paragraphStyle))
+            
+                allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag], fontSize: 18, paragraphStyle: paragraphStyle))
             }
-            
             let tempStr = (html as NSString).substring(with: range)
-            
             if tempStr.hasPrefix("<p") {
                 let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
                 let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
@@ -233,10 +168,10 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag] ,fontSize: 18, paragraphStyle: paragraphStyle))
+            allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag], fontSize: 18, paragraphStyle: paragraphStyle))
         }
     }
-
+    
     func resolverBLK(fillBlankIndex: Int, userAnswers: [String]) {
         var enterStr = spaceStr
         var haveAnswer = false
@@ -297,7 +232,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
             
-                allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag] ,fontSize: 18, paragraphStyle: paragraphStyle))
+                allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag], fontSize: 18, paragraphStyle: paragraphStyle))
             }
             let tempStr = (html as NSString).substring(with: range)
             if tempStr.hasPrefix("<p") {
@@ -321,7 +256,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag] ,fontSize: 18, paragraphStyle: paragraphStyle))
+            allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag], fontSize: 18, paragraphStyle: paragraphStyle))
         }
     }
     

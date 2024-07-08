@@ -28,6 +28,7 @@ class QueContentEssayCell: UITableViewCell {
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
             textView.text = model.getAnswer()
+            textViewHeight.constant = textView.contentSize.height
         }
     }
     

@@ -92,6 +92,10 @@ extension NSAttributedString {
 
 extension String {
     
+    func textHeight(textWidth: CGFloat, font: UIFont) -> CGFloat {
+        (self as NSString).boundingRect(with: .init(width: textWidth, height: CGFLOAT_MAX), attributes: [.font : font], context: nil).height
+    }
+    
     func removeSpace() -> String {
         self.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -149,6 +153,20 @@ extension String {
             .paragraphStyle : paragraphStyle
         ], range: .init(location: 0, length: ret.length))
         return ret
+    }
+    
+    /// 文本对齐方式
+    func resolverPAligment() -> NSTextAlignment? {
+        if hasPrefix("<p"), let data = self.data(using: .utf8), let hpple = TFHpple(data: data, isXML: false), let element = (hpple.search(withXPathQuery: "//p") as? [TFHppleElement])?.first {
+            if let align = element.attributes["align"] as? String {
+                if align.lowercased() == "right" {
+                    return .right
+                } else if align.lowercased() == "left" {
+                    return .left
+                }
+            }
+        }
+        return nil
     }
 }
 

@@ -19,7 +19,8 @@ class QueContentDescribeCell: UITableViewCell {
         didSet {
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
-            textView.attributedText = model.attr
+            textView.attributedText = model.handleContentAttr
+            textViewHeight.constant = textView.contentSize.height
         }
     }
     

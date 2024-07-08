@@ -17,7 +17,7 @@ class QueContentDescribeModel: NSObject, QueContentModel {
     
     let handleContentAttr: NSMutableAttributedString
     
-    init(attr: NSAttributedString) {
+    init(attr: NSMutableAttributedString) {
         self.handleContentAttr = attr
     }
     
@@ -61,9 +61,10 @@ class QueContentDescribeModel: NSObject, QueContentModel {
                 }
             }
             handleContentAttr.handle(type: [.uTag, .iTag, .bTag, .blk, .br], fontSize: fontSize, baselineOffset: baselineOffset)
-            self.handleContentAttr = handleContentAttr
+            self.init(attr: handleContentAttr)
         } else {
-            self.handleContentAttr = html.handle(type: [.uTag, .iTag, .bTag, .blk, .br], fontSize: fontSize, paragraphStyle: needStyle ? style : nil, baselineOffset: baselineOffset)
+            let attr = html.handle(type: [.uTag, .iTag, .bTag, .blk, .br], fontSize: fontSize, paragraphStyle: needStyle ? style : nil, baselineOffset: baselineOffset)
+            self.init(attr: attr)
         }
     }
     

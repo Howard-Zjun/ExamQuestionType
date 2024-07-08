@@ -37,6 +37,7 @@ class QueContentFillBlankCell: UITableViewCell {
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
             textView.attributedText = model.resultAttributed
+            textViewHeight.constant = textView.contentSize.height
         }
     }
     

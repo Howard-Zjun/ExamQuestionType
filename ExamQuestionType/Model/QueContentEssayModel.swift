@@ -19,12 +19,15 @@ class QueContentEssayModel: NSObject, QueContentModel {
     
     let index: Int
     
-    init?(queLevel2: QueLevel2, index: Int) {
+    let isResult: Bool
+    
+    init?(queLevel2: QueLevel2, index: Int, isResult: Bool) {
         guard queLevel2.type == .essay else {
             return nil
         }
         self.queLevel2 = queLevel2
         self.index = index
+        self.isResult = isResult
     }
     
     // 设置答案

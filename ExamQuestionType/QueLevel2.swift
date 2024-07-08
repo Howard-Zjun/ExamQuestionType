@@ -25,13 +25,13 @@ class QueLevel2: NSObject {
     
     let type: QueLevel2Type
     
-    let no: Int?
+    let no: String?
     
     let score: Double
     
     var userScore: Double
     
-    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QueLevel2Type, no: Int?, score: Double) {
+    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QueLevel2Type, no: String?, score: Double) {
         self.videoUrl = videoUrl
         self.voiceUrl = voiceUrl
         self.subLevel2 = subLevel2

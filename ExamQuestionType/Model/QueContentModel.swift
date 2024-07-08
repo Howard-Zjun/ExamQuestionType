@@ -58,50 +58,101 @@ class QueContentResolver {
         return retModels
     }
     
-    static func essayResolver(queLevel2: QueLevel2) -> [QueContentModel] {
-        guard queLevel2.type == .essay, let html = queLevel2.content else {
+    static func normalResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
+        let no = queLevel2.no ?? ""
+        let content = queLevel2.content ?? ""
+        let html = no + content
+        guard !html.isEmpty else {
             return []
         }
         
-        let tempRet = essayResolver(queLevel2: queLevel2, html: html, essayOffset: 0)
+        let tempModels = normalResolver(html: html, isResult: isResult)
         
+        return fixDescribe(contentModels: tempModels)
+    }
+    
+    static func normalResolver(html: String, isResult: Bool) -> [QueContentModel] {
         var ret: [QueContentModel] = []
-        var right = 0
-        var contentAttr = NSMutableAttributedString()
-        while right < tempRet.count {
-            if let describeModel = tempRet[right] as? QueContentDescribeModel {
-                contentAttr.append(describeModel.attr)
-            } else {
-                if !contentAttr.string.isEmpty {
-                    while contentAttr.string.hasSuffix("\n") {
-                        contentAttr.replaceCharacters(in: .init(location: contentAttr.length - 1, length: 1), with: "")
-                    }
-                    if !contentAttr.string.isEmpty {
-                        ret.append(QueContentDescribeModel(attr: contentAttr))
-                    }
-                    
-                    contentAttr = .init()
+        let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)")
+
+        var lastIndex = 0
+        
+        pRegex.enumerateMatches(in: html, range: .init(location: 0, length: html.count)) { match, _, _ in
+            guard let range = match?.range else { return }
+            
+            if range.location != lastIndex { // 有未识别内容
+                let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
+                
+                if let describeModel = QueContentDescribeModel(html: noHandleStr) {
+                    ret.append(describeModel)
                 }
-                retModels.append(tempModels[right])
             }
-            right += 1
+            
+            let tempStr = (html as NSString).substring(with: range)
+            
+            if tempStr.hasPrefix("<p") {
+                let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
+                let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
+
+                let tempRet = normalResolver(html: content, isResult: isResult)
+                // 处理对齐
+                if let aligment = tempStr.resolverPAligment() {
+                    for temp in tempRet {
+                        if let describeModel = temp as? QueContentDescribeModel {
+                            describeModel.set(textAlignment: aligment)
+                        }
+                    }
+                }
+                ret += tempRet
+                if let describeModel = QueContentDescribeModel(html: "\n") {
+                    ret.append(describeModel)
+                }
+            } else if tempStr.hasPrefix("<table") {
+                if let tableModel = QueContentTableModel(html: tempStr) {
+                    ret.append(tableModel)
+                }
+            } else if tempStr.hasPrefix("<img") {
+                if let imgModel = QueContentImgModel(html: tempStr) {
+                    ret.append(imgModel)
+                }
+            } else if tempStr.hasPrefix("<blk") {
+                if let describeModel = QueContentDescribeModel(html: "____") {
+                    ret.append(describeModel)
+                }
+            }
+            
+            lastIndex = range.location + range.length
         }
-        if !contentAttr.string.isEmpty {
-            while contentAttr.string.hasSuffix("\n") {
-                contentAttr.replaceCharacters(in: .init(location: contentAttr.length - 1, length: 1), with: "")
-            }
-            if !contentAttr.string.isEmpty {
-                ret.append(QueContentDescribeModel(attr: contentAttr))
+        
+        if lastIndex < html.count { // 有未识别内容
+            let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
+
+            if let describeModel = QueContentDescribeModel(html: noHandleStr) {
+                ret.append(describeModel)
             }
         }
         
         return ret
     }
+
     
-    static func essayResolver(queLevel2: QueLevel2, html: String, essayOffset: Int) -> [QueContentModel] {
+    static func essayResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
+        let no = queLevel2.no ?? ""
+        let content = queLevel2.content ?? ""
+        let html = no + content
+        guard !html.isEmpty else {
+            return []
+        }
+        
+        let tempModels = essayResolver(queLevel2: queLevel2, html: html, essayOffset: 0, isResult: isResult)
+        
+        return fixDescribe(contentModels: tempModels)
+    }
+    
+    static func essayResolver(queLevel2: QueLevel2, html: String, essayOffset: Int, isResult: Bool) -> [QueContentModel] {
         var ret: [QueContentModel] = []
         let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)")
-        
+
         var lastIndex = 0
         
         var essayIndex = 0
@@ -118,11 +169,18 @@ class QueContentResolver {
             }
             
             let tempStr = (html as NSString).substring(with: range)
-
+            
             if tempStr.hasPrefix("<p") {
-                let content = (tempStr as NSString).substring(with: .init(location: 3, length: tempStr.count - 3 - 4)) // 去掉<p></p>
-
-                let tempRet = essayResolver(queLevel2: queLevel2, html: content, essayOffset: essayOffset + essayIndex)
+                let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
+                let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
+                let tempRet = essayResolver(queLevel2: queLevel2, html: content, essayOffset: essayOffset + essayIndex, isResult: isResult)
+                if let aligment = tempStr.resolverPAligment() {
+                    for temp in tempRet {
+                        if let describeModel = temp as? QueContentDescribeModel {
+                            describeModel.set(textAlignment: aligment)
+                        }
+                    }
+                }
                 ret += tempRet
                 if let describeModel = QueContentDescribeModel(html: "\n") {
                     ret.append(describeModel)
@@ -136,7 +194,7 @@ class QueContentResolver {
                     ret.append(imgModel)
                 }
             } else if tempStr.hasPrefix("<blk") {
-                if let essayModel = QueContentEssayModel(queLevel2: queLevel2, index: essayOffset  + essayIndex) {
+                if let essayModel = QueContentEssayModel(queLevel2: queLevel2, index: essayOffset  + essayIndex, isResult: isResult) {
                     ret.append(essayModel)
                     
                     essayIndex += 1
@@ -146,123 +204,50 @@ class QueContentResolver {
             lastIndex = range.location + range.length
         }
         
-        if lastIndex < html.count { // 后面有未识别的内容
+        if lastIndex < html.count { // 有未识别内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
 
             if let describeModel = QueContentDescribeModel(html: noHandleStr) {
                 ret.append(describeModel)
             }
         }
+        
         return ret
     }
+
     
-    static func fillBlankResolver(queLevel2: QueLevel2) -> [QueContentModel] {
-        guard queLevel2.type == .FillBlank else {
-            return []
-        }
-        
-        if let fillBlankModel = QueContentFillBlankModel(queLevel2: queLevel2) {
-            return [fillBlankModel]
-        } else {
-            return []
-        }
-    }
-    
-    static func selectResolver(queLevel2: QueLevel2) -> [QueContentModel] {
-        guard queLevel2.type == .Select else {
-            return []
-        }
-        
-        if let selectModel = QueContentSelectModel(queLevel2: queLevel2) {
-            return [selectModel]
-        } else if let selectModel = QueContentFillBlankModel(queLevel2: queLevel2) {
-            return [selectModel]
-        } else {
-            return []
-        }
-    }
-    
-    static func contentResolver(queLevel1: QueLevel1, queLevel2: QueLevel2) -> [QueContentModel] {
-        var tempModels: [QueContentModel] = []
-        var queue: [QueLevel2] = [queLevel2]
-        var index = 0
-        
-        let titleModel = QueContentTitleModel(queLevel1: queLevel1)
-        tempModels.append(titleModel)
-        
-        while index < queue.count {
-            let model = queue[index]
-                
-            if model.type == .essay {
-                tempModels += essayResolver(queLevel2: model)
-            } else if model.type == .FillBlank {
-                tempModels += fillBlankResolver(queLevel2: model)
-            } else if model.type == .Select {
-                tempModels += selectResolver(queLevel2: model)
-            } else {
-                guard let data = model.content?.data(using: .utf8) else {
-                    continue
-                }
-                let hpple = TFHpple(data: data, isXML: false)
-                guard let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement] else {
-                    continue
-                }
-                
-                for (elementIndex, element) in elements.enumerated() {
-                    for item in (element.children as? [TFHppleElement]) ?? [] {
-                        if item.tagName == "text" {
-                            if let describeModel = QueContentDescribeModel(html: item.content + "\n") {
-                                tempModels.append(describeModel)
-                            }
-                        } else if item.tagName == "img" {
-                            if let imgModel = QueContentImgModel(html: item.raw) {
-                                tempModels.append(imgModel)
-                            }
-                        } else if item.tagName == "table" {
-                            if let tableModel = QueContentTableModel(html: item.raw) {
-                                tempModels.append(tableModel)
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if let subLevel2 = model.subLevel2 {
-                queue += subLevel2
-            }
-            
-            index += 1
-        }
-        
-        var right = 0
+    static func fillBlankResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
         var retModels: [QueContentModel] = []
-        var attr = NSMutableAttributedString()
-        // 将 QueContentDescribeModel 整合
-        while right < tempModels.count {
-            if let describeModel = tempModels[right] as? QueContentDescribeModel {
-                attr.append(describeModel.attr)
-            } else {
-                if !attr.string.isEmpty {
-                    while attr.string.hasSuffix("\n") {
-                        attr.replaceCharacters(in: .init(location: attr.length - 1, length: 1), with: "") // 去掉\n
-                    }
-                    let describeModel = QueContentDescribeModel(attr: attr)
-                    retModels.append(describeModel)
-                    
-                    attr = .init()
-                }
-                retModels.append(tempModels[right])
-            }
-            right += 1
+        
+        if let fillBlankModel = QueContentFillBlankModel(queLevel2: queLevel2, isResult: isResult) {
+            retModels.append(fillBlankModel)
         }
         
-        if !attr.string.isEmpty {
-            while attr.string.hasSuffix("\n") {
-                attr.replaceCharacters(in: .init(location: attr.length - 1, length: 1), with: "") // 去掉\n
-            }
-            let describeModel = QueContentDescribeModel(attr: attr)
-            retModels.append(describeModel)
+        return retModels
+    }
+    
+    static func selectFillBlankResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
+        var retModels: [QueContentModel] = []
+        
+        if let selectFillBlankModel = QueContentSelectFillBlankModel(queLevel2: queLevel2, isResult: isResult) {
+            retModels.append(selectFillBlankModel)
         }
+        return retModels
+    }
+    
+    static func selectResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
+        var retModels: [QueContentModel] = []
+        
+        if let selectModel = QueContentSelectContentModel(queLevel2: queLevel2, isResult: isResult) {
+            retModels.append(selectModel)
+        }
+        
+        return retModels
+    }
+    
+    static func conversationResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
+        let retModels = normalResolver(queLevel2: queLevel2, isResult: isResult)
+        
         return retModels
     }
 }

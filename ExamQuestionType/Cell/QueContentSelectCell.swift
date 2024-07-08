@@ -4,7 +4,7 @@ class QueContentSelectCell: UITableViewCell {
 
     var observation: NSKeyValueObservation?
 
-    var model: QueContentSelectModel! {
+    var model: QueContentSelectFillBlankModel! {
         didSet {
             model.delegate = self
             textViewTop.constant = model.contentInset.top

@@ -19,7 +19,7 @@ class QueDetailViewController: UIViewController {
             for model in models {
                 if let fillBlankModel = model as? QueContentFillBlankModel {
                     fillBlankModel.delegate = self
-                } else if let selectModel = model as? QueContentSelectModel {
+                } else if let selectModel = model as? QueContentSelectFillBlankModel {
                     selectModel.delegate = self
                 }
             }
@@ -146,7 +146,7 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
             cell.model = imgModel
             cell.selectionStyle = .none
             return cell
-        } else if let selectModel = model as? QueContentSelectModel {
+        } else if let selectModel = model as? QueContentSelectFillBlankModel {
             let cell = tableView.dequeueReusableCell(QueContentSelectCell.self, indexPath: indexPath)
             cell.model = selectModel
             cell.contentSizeBeginChange = {
