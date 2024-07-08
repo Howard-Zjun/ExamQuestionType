@@ -21,66 +21,86 @@ protocol QueContentModel {
 
 class QueContentResolver {
     
+    /// 将 QueContentDescribeModel 整合
+    static func fixDescribe(contentModels: [QueContentModel]) -> [QueContentModel] {
+        var right = 0
+        var retModels: [QueContentModel] = []
+        var contentAttr = NSMutableAttributedString()
+        
+        func finishDescribe() {
+            if !contentAttr.string.isEmpty {
+                while contentAttr.string.hasPrefix("\n") {
+                    contentAttr.replaceCharacters(in: .init(location: 0, length: 1), with: "")
+                }
+                while contentAttr.string.hasSuffix("\n") {
+                    contentAttr.replaceCharacters(in: .init(location: contentAttr.length - 1, length: 1), with: "")
+                }
+                if !contentAttr.string.isEmpty {
+                    let describeModel = QueContentDescribeModel(attr: contentAttr)
+                    retModels.append(describeModel)
+                }
+                
+                contentAttr = .init()
+            }
+        }
+        
+        while right < contentModels.count {
+            if let describeModel = contentModels[right] as? QueContentDescribeModel {
+                contentAttr.append(describeModel.handleContentAttr)
+            } else {
+                finishDescribe()
+                retModels.append(contentModels[right])
+            }
+            right += 1
+        }
+        finishDescribe()
+        
+        return retModels
+    }
+    
     static func essayResolver(queLevel2: QueLevel2) -> [QueContentModel] {
         guard queLevel2.type == .essay, let html = queLevel2.content else {
             return []
         }
         
         let tempRet = essayResolver(queLevel2: queLevel2, html: html, essayOffset: 0)
+        
         var ret: [QueContentModel] = []
-        
-        var left = 0, right = 0
+        var right = 0
+        var contentAttr = NSMutableAttributedString()
         while right < tempRet.count {
-            if !(tempRet[right] is QueContentDescribeModel) {
-                // 将文字描述整合
-                if left != right {
-                    let attr = NSMutableAttributedString()
-                    
-                    for index in left..<right {
-                        let describeModel = tempRet[index] as! QueContentDescribeModel
-                        attr.append(describeModel.attr)
-                    }
-                    
-                    // 去掉末尾换行
-                    while attr.string.hasSuffix("\n") {
-                        attr.replaceCharacters(in: .init(location: attr.length - 1, length: 1), with: "")
-                    }
-                    let describeModel = QueContentDescribeModel(attr: attr)
-                    ret.append(describeModel)
-                }
-             
-                
-                ret.append(tempRet[right])
-                
-                right += 1
-                left = right
+            if let describeModel = tempRet[right] as? QueContentDescribeModel {
+                contentAttr.append(describeModel.attr)
             } else {
-                right += 1
+                if !contentAttr.string.isEmpty {
+                    while contentAttr.string.hasSuffix("\n") {
+                        contentAttr.replaceCharacters(in: .init(location: contentAttr.length - 1, length: 1), with: "")
+                    }
+                    if !contentAttr.string.isEmpty {
+                        ret.append(QueContentDescribeModel(attr: contentAttr))
+                    }
+                    
+                    contentAttr = .init()
+                }
+                retModels.append(tempModels[right])
+            }
+            right += 1
+        }
+        if !contentAttr.string.isEmpty {
+            while contentAttr.string.hasSuffix("\n") {
+                contentAttr.replaceCharacters(in: .init(location: contentAttr.length - 1, length: 1), with: "")
+            }
+            if !contentAttr.string.isEmpty {
+                ret.append(QueContentDescribeModel(attr: contentAttr))
             }
         }
         
-        if left != right {
-            let attr = NSMutableAttributedString()
-            
-            for index in left..<right {
-                let describeModel = tempRet[index] as! QueContentDescribeModel
-                attr.append(describeModel.attr)
-            }
-            
-            // 去掉末尾换行
-            while attr.string.hasSuffix("\n") {
-                attr.replaceCharacters(in: .init(location: attr.length - 1, length: 1), with: "")
-            }
-            let describeModel = QueContentDescribeModel(attr: attr)
-            ret.append(describeModel)
-        }
-            
         return ret
     }
     
     static func essayResolver(queLevel2: QueLevel2, html: String, essayOffset: Int) -> [QueContentModel] {
         var ret: [QueContentModel] = []
-        let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p>.*?</p>)")
+        let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)")
         
         var lastIndex = 0
         

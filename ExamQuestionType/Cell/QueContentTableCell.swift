@@ -11,14 +11,14 @@ class QueContentTableCell: UITableViewCell {
 
     var model: QueContentTableModel! {
         didSet {
-            if let suffixContent = model.tableModel.suffixContent {
-                suffixLab.text = suffixContent
-            } else {
-                suffixLab.text = ""
-            }
-            
             collectionView.snp.updateConstraints { make in
                 make.top.equalToSuperview().inset(model.contentInset.top)
+                make.bottom.equalToSuperview().inset(model.contentInset.bottom)
+                if let last = model.tableModel.expansionTrModelArr.last {
+                    make.height.equalTo(ceil(last.y + last.height))
+                } else {
+                    make.height.equalTo(model.tableModel.rowCount * 55)
+                }
             }
         }
     }
@@ -39,29 +39,15 @@ class QueContentTableCell: UITableViewCell {
         return collectionView
     }()
     
-    lazy var suffixLab: UILabel = {
-        let suffixLab = UILabel(frame: .init(x: 20, y: collectionView.frame.maxY, width: contentView.kwidth - 40, height: 50))
-        suffixLab.font = .systemFont(ofSize: 18)
-        suffixLab.textColor = .black
-        suffixLab.textAlignment = .left
-        suffixLab.numberOfLines = 0
-        return suffixLab
-    }()
-    
     // MARK: - init
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         contentView.addSubview(collectionView)
-        contentView.addSubview(suffixLab)
         collectionView.snp.makeConstraints { make in
             make.left.right.equalToSuperview().inset(20)
             make.top.equalToSuperview().inset(0)
+            make.bottom.equalToSuperview().inset(0)
             make.height.equalTo(300)
-        }
-        suffixLab.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(20)
-            make.bottom.equalToSuperview()
-            make.top.equalTo(collectionView.snp.bottom)
         }
     }
     
@@ -95,12 +81,13 @@ extension QueContentTableCell: TableCollectionViewFlowLayoutDeleagte {
         model.tableModel.expansionTrModelArr[indexPath.item]
     }
     
+    /// 旧单元大小计算方式
     func itemFrame(indexPath: IndexPath) -> CGRect {
         let contentWidth = collectionView.frame.width
         let contentHeight = collectionView.frame.height
         
-        let col = model.tableModel.theadModel?.trModelArr.first?.tdModelArr.count ?? model.tableModel.trModelArr[0].tdModelArr.count
-        let row = (model.tableModel.theadModel?.trModelArr.count ?? 0) + model.tableModel.trModelArr.count
+        let col = model.tableModel.maxColCount
+        let row = model.tableModel.rowCount
         
         let colSpan = floor(contentWidth / CGFloat(col))
         let rowSpan = floor(contentHeight / CGFloat(row))
@@ -126,11 +113,10 @@ extension QueContentTableCell {
             didSet {
                 lab.font = tdModel.configModel.font
                 lab.textColor = tdModel.configModel.textColor
-                lab.textAlignment = tdModel.configModel.textAlignment
                 lab.layer.borderColor = tdModel.configModel.boardColor.cgColor
                 lab.layer.borderWidth = tdModel.configModel.boardWidth
                 lab.backgroundColor = tdModel.configModel.backgroundColor
-                lab.text = tdModel.content
+                lab.attributedText = tdModel.attr
             }
         }
         
@@ -192,8 +178,8 @@ class TableCollectionViewFlowLayout: UICollectionViewFlowLayout {
     
     override func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
         let temp = UICollectionViewLayoutAttributes(forCellWith: indexPath)
-        if let tempFrame = delegate?.itemFrame(indexPath: indexPath) {
-            temp.frame = tempFrame
+        if let model = delegate?.model(indexPath: indexPath) {
+            temp.frame = .init(x: model.x, y: model.y, width: model.width, height: model.height)
         }
         return temp
     }

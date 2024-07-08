@@ -16,6 +16,13 @@ class QueDetailViewController: UIViewController {
     var index: Int = 0 {
         didSet {
             self.models = QueContentResolver.contentResolver(queLevel1: queLevel1, queLevel2: queLevel2Arr[index])
+            for model in models {
+                if let fillBlankModel = model as? QueContentFillBlankModel {
+                    fillBlankModel.delegate = self
+                } else if let selectModel = model as? QueContentSelectModel {
+                    selectModel.delegate = self
+                }
+            }
             tableView.reloadData()
         }
     }
@@ -168,5 +175,17 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         return UITableViewCell()
+    }
+}
+
+// MARK: - QueContentModelDelegate
+extension QueDetailViewController: QueContentModelDelegate {
+    
+    func contentDidChange(model: any QueContentModel) {
+        for (index, contentModel) in models.enumerated() {
+            if let obj1 = model as? NSObject, let obj2 = contentModel as? NSObject, obj1 == obj2 {
+                tableView.reloadRows(at: [.init(row: index, section: 0)], with: .none)
+            }
+        }
     }
 }

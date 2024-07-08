@@ -13,7 +13,7 @@ class QueContentTableModel: NSObject, QueContentModel {
         QueContentTableCell.self
     }
     
-    var contentInset: UIEdgeInsets = .zero
+    var contentInset: UIEdgeInsets = .init(top: 10, left: 0, bottom: 10, right: 0)
     
     let tableModel: EQTableModel
     
@@ -38,13 +38,11 @@ class EQTableModel: NSObject {
     
     let trModelArr: [EQTableTrModel]
     
-    var suffixContent: String?
-    
     let expansionTrModelArr: [EQTableTdModel]
     
-    let maxColCount: Int
-    
-    let rowCount: Int
+    var maxColCount: Int
+
+    var rowCount: Int
     
     init?(html: String) {
         if let data = html.data(using: .utf8) {
@@ -76,26 +74,15 @@ class EQTableModel: NSObject {
             self.theadModel = theadModel
             self.trModelArr = trModelArr
             self.expansionTrModelArr = trModelArr.flatMap({$0.tdModelArr})
+            self.maxColCount = 1
+            self.rowCount = 1
         } else {
             return nil
         }
         
-        let range = (html as NSString).range(of: "</table>")
-        let suffixStr = (html as NSString).substring(from: range.location + range.length)
-        if let data = suffixStr.data(using: .utf8) {
-            let hpple = TFHpple(data: data, isXML: false)
-            let arr = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement]
-            for item in arr ?? [] {
-                if item.tagName == "p" {
-                    if suffixContent == nil {
-                        suffixContent = ""
-                    }
-                    suffixContent! += item.content
-                }
-            }
-        }
-        
-        var maxColCount = 0
+        super.init()
+
+        var maxColCount = 0 // 最大列数
         var rowCount = 0
         if let theadModel = theadModel {
             for (trIndex, trModel) in theadModel.trModelArr.enumerated() {
@@ -121,7 +108,7 @@ class EQTableModel: NSObject {
         // 每一列的阻碍
         var barrierArr: [Int] = .init(repeating: 0, count: maxColCount)
         
-        for (trIndex, trModel) in trModelArr.enumerated() {
+        for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModelArr).enumerated() {
             var left = 0 // 当前等待修正的下标
             var right = 0 // 指向的下标
             while right < maxColCount && left < trModel.tdModelArr.count {
@@ -159,6 +146,43 @@ class EQTableModel: NSObject {
                     right += 1
                 }
             }
+            print(trModel.tdModelArr.map({"xNum: \($0.xNum) yNum: \($0.yNum) widthNum: \($0.widthNum) heightNum: \($0.heightNum)"}))
+            print("------")
+        }
+        
+        adjustSize()
+    }
+    
+    /// 单元大小适应
+    func adjustSize(contentWidth: CGFloat = kScreenWidth - 40) {
+        var arr: [[EQTableTdModel]] = .init(repeating: [], count: rowCount)
+        
+        for trModel in (theadModel?.trModelArr ?? []) + trModelArr {
+            for tdModel in trModel.tdModelArr {
+                arr[tdModel.yNum + tdModel.heightNum - 1].append(tdModel)
+            }
+        }
+        
+        var maxY: CGFloat = 0
+        let colSpan = floor(contentWidth / CGFloat(maxColCount))
+        for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModelArr).enumerated() {
+            var maxContentHeight: CGFloat = 0
+            for tdModel in trModel.tdModelArr {
+                tdModel.x = CGFloat(tdModel.xNum) * colSpan
+                tdModel.y = maxY
+                if tdModel.isLast {
+                    tdModel.width = contentWidth - tdModel.x
+                } else {
+                    tdModel.width = CGFloat(tdModel.widthNum) * colSpan
+                }
+                maxContentHeight = max(maxContentHeight, tdModel.attr.string.textHeight(textWidth: tdModel.width, font: tdModel.configModel.font))
+            }
+            
+            maxY += maxContentHeight + 20
+            for tdModel in arr[trIndex] {
+                tdModel.height = maxY - tdModel.y
+            }
+            
         }
     }
 }
@@ -219,8 +243,6 @@ class EQTableConfig: NSObject {
     var textColor: UIColor
     
     var backgroundColor: UIColor
-
-    var textAlignment: NSTextAlignment
     
     var boardColor: UIColor
     
@@ -229,13 +251,11 @@ class EQTableConfig: NSObject {
     init(font: UIFont = .systemFont(ofSize: 14),
          textColor: UIColor = .black,
          backgroundColor: UIColor = .white,
-         textAlignment: NSTextAlignment = .left,
          boardColor: UIColor = .black,
          boardWidth: CGFloat = 0.5) {
         self.font = font
         self.textColor = textColor
         self.backgroundColor = backgroundColor
-        self.textAlignment = textAlignment
         self.boardColor = boardColor
         self.boardWidth = boardWidth
     }
@@ -251,14 +271,22 @@ class EQTableTdModel: NSObject {
     
     var yNum: Int = 0
     
+    // 跨列
     var widthNum: Int
-    
+    // 跨行
     var heightNum: Int
     
+    var x: CGFloat = 0
+    
+    var y: CGFloat = 0
+    
+    var width: CGFloat = 0
+    
+    var height: CGFloat = 0
     // 是否该行最后一个
     var isLast: Bool = false
     
-    var content: String
+    let attr: NSMutableAttributedString
     
     var configModel: EQTableConfig = .contentModel
     
@@ -266,24 +294,12 @@ class EQTableTdModel: NSObject {
         if element.tagName != "td" {
             return nil
         }
-        if element.raw.contains("</u>") { // 包含下划线
-            var content = ""
-            var index = 0
-            var queue: [TFHppleElement] = element.children as! [TFHppleElement]
-            while index < queue.count {
-                let item = queue[index]
-                if item.tagName == "u" {
-                    content += "___"
-                } else if item.tagName == "text" {
-                    content += item.content
-                } else {
-                    queue += item.children as! [TFHppleElement]
-                }
-                index += 1
-            }
-            self.content = content
+        let firstEnd = (element.raw as NSString).range(of: ">").location + 1
+        let html = (element.raw as NSString).substring(with: .init(location: firstEnd, length: element.raw.count - firstEnd - 4))
+        if let describeModel = QueContentDescribeModel(html: html, needStyle: false) {
+            attr = describeModel.handleContentAttr
         } else {
-            self.content = element.content
+            attr = NSMutableAttributedString(string: element.content)
         }
         
         // 跨行
