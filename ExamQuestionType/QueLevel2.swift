@@ -19,30 +19,26 @@ class QueLevel2: NSObject {
     
     let correctAnswers: [String]?
     
-    var userAnswers: [String]
-    
     let options: [String]?
     
     let type: QueLevel2Type
     
     let no: String?
     
-    let score: Double
+    var isNormal: Bool
     
-    var userScore: Double
+    var userAnswers: [String] = []
     
-    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QueLevel2Type, no: String?, score: Double) {
+    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QueLevel2Type, no: String?, isNormal: Bool) {
         self.videoUrl = videoUrl
         self.voiceUrl = voiceUrl
         self.subLevel2 = subLevel2
         self.content = content
         self.correctAnswers = correctAnswers
-        self.userAnswers = []
         self.options = options
         self.type = type
         self.no = no
-        self.score = score
-        self.userScore = 0
+        self.isNormal = isNormal
     }
 }
 
@@ -50,8 +46,9 @@ extension QueLevel2 {
     
     enum QueLevel2Type: Int {
         case FillBlank = 0
+        case SelectFillBlank
         case Select
         case Record
-        case essay
+        case Essay
     }
 }

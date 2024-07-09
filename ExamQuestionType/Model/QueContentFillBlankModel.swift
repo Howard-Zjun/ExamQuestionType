@@ -29,9 +29,14 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     var resultAttributed: NSMutableAttributedString
     
-    let paragraphStyle: NSParagraphStyle
+    lazy var paragraphStyle: NSParagraphStyle = {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 5
+        paragraphStyle.paragraphSpacing = 5
+        return paragraphStyle
+    }()
     
-    var delegate: QueContentModelDelegate?
+    weak var delegate: QueContentModelDelegate?
     
     var focunsIndex: Int? {
         didSet {
@@ -55,11 +60,13 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         }
     }
     
+    let isResult: Bool
+    
     init?(queLevel2: QueLevel2, isResult: Bool = false) {
         let no = queLevel2.no ?? ""
         let content = queLevel2.content ?? ""
         let html = no + content
-        guard !html.isEmpty else {
+        guard queLevel2.type == .FillBlank && !html.isEmpty else {
             return nil
         }
         
@@ -67,10 +74,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         self.fillBlankAttrArr = []
         self.resultAttributed = .init()
         self.queLevel2 = queLevel2
-        let style = NSMutableParagraphStyle()
-        style.lineSpacing = 5
-        style.paragraphSpacing = 5
-        self.paragraphStyle = style
+        self.isResult = isResult
         super.init()
         
         if isResult {
@@ -96,11 +100,22 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     }
     
     func getAnswer(index: Int) -> String? {
-        while let count2 = queLevel2.correctAnswers?.count, queLevel2.userAnswers.count < count2 {
-            queLevel2.userAnswers.append("")
-        }
-        if !queLevel2.userAnswers[index].isEmpty {
-            return queLevel2.userAnswers[index]
+        if queLevel2.isNormal {
+            if queLevel2.userAnswers.count <= index {
+                return nil
+            }
+            if !queLevel2.userAnswers[index].isEmpty {
+                return queLevel2.userAnswers[index]
+            }
+        } else {
+            if let qst = queLevel2.subLevel2?[index] {
+                if qst.userAnswers.count <= 0 {
+                    return nil
+                }
+                if !qst.userAnswers[0].isEmpty {
+                    return qst.userAnswers[0]
+                }
+            }
         }
         return nil
     }
@@ -138,45 +153,19 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             print("\(NSStringFromClass(Self.self)) \(#function): 未选择填空")
             return
         }
-        while let count2 = queLevel2.correctAnswers?.count, queLevel2.userAnswers.count < count2 {
-            queLevel2.userAnswers.append("")
-        }
-        print("\(NSStringFromClass(Self.self)) \(#function) text: \(text)")
-        queLevel2.userAnswers[index] = text
-    }
-    
-    func updateScore() {
-        var qsScore = Float(queLevel2.score) / Float(queLevel2.correctAnswers?.count ?? 1)
-        if queLevel2.correctAnswers?.count == 1 {
-            qsScore = Float(queLevel2.score)
-        }
-        
-        var total = 0.0
-        var correct = 0
-        for (index, userAnswer) in queLevel2.userAnswers.enumerated() {
-            let correctAnswers = queLevel2.correctAnswers?[index]
-            if let correctAnswer = correctAnswers?.components(separatedBy: "/") {
-                if correctAnswer.count > 1 {
-                    for answer in correctAnswer {
-                        if answer.removeSpace() == userAnswer.removeSpace() {
-                            total += Double(qsScore)
-                            correct += 1
-                            break
-                        }
-                    }
-                } else {
-                    if correctAnswers?.removeSpace() == userAnswer.removeSpace(){
-                        total += Double(qsScore)
-                        correct += 1
-                    }
+        if queLevel2.isNormal {
+            while queLevel2.userAnswers.count < index {
+                queLevel2.userAnswers.append("")
+            }
+            queLevel2.userAnswers[index] = text
+        } else {
+            if let qst = queLevel2.subLevel2?[index] {
+                while qst.userAnswers.count < 1 {
+                    qst.userAnswers.append("")
                 }
+                qst.userAnswers[0] = text
             }
         }
-        if correct == queLevel2.userAnswers.count {
-            total = queLevel2.score
-        }
-        queLevel2.userScore = total
-        print("\(NSStringFromClass(Self.self)) \(#function) score:\(total)")
     }
     
     func makeResultAttr() {

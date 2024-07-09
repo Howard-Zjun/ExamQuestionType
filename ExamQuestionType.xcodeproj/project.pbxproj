@@ -33,8 +33,6 @@
 		3933FD022C31299900B4744F /* QueDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3933FD012C31299900B4744F /* QueDetailViewController.swift */; };
 		3933FD052C3199A100B4744F /* QueContentSelectCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3933FD042C3199A100B4744F /* QueContentSelectCell.xib */; };
 		3933FD062C3199A100B4744F /* QueContentSelectCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3933FD032C3199A100B4744F /* QueContentSelectCell.swift */; };
-		3946C45C2C3C45A300AF7DBA /* QueContentSelectContentModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3946C45B2C3C45A300AF7DBA /* QueContentSelectContentModel.swift */; };
-		3946C45E2C3C45E700AF7DBA /* QueContentSelectContentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3946C45D2C3C45E700AF7DBA /* QueContentSelectContentCell.swift */; };
 		3946C4602C3C49C800AF7DBA /* QueContentSelectOptionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3946C45F2C3C49C800AF7DBA /* QueContentSelectOptionModel.swift */; };
 		3946C4622C3C4AEC00AF7DBA /* QueContentSelectOptionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3946C4612C3C4AEC00AF7DBA /* QueContentSelectOptionCell.swift */; };
 		39528A9B2C27EFA5005AEA5A /* HTMLTranslate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39528A9A2C27EFA5005AEA5A /* HTMLTranslate.swift */; };
@@ -79,8 +77,6 @@
 		3933FD012C31299900B4744F /* QueDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueDetailViewController.swift; sourceTree = "<group>"; };
 		3933FD032C3199A100B4744F /* QueContentSelectCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentSelectCell.swift; sourceTree = "<group>"; };
 		3933FD042C3199A100B4744F /* QueContentSelectCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = QueContentSelectCell.xib; sourceTree = "<group>"; };
-		3946C45B2C3C45A300AF7DBA /* QueContentSelectContentModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentSelectContentModel.swift; sourceTree = "<group>"; };
-		3946C45D2C3C45E700AF7DBA /* QueContentSelectContentCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentSelectContentCell.swift; sourceTree = "<group>"; };
 		3946C45F2C3C49C800AF7DBA /* QueContentSelectOptionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentSelectOptionModel.swift; sourceTree = "<group>"; };
 		3946C4612C3C4AEC00AF7DBA /* QueContentSelectOptionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentSelectOptionCell.swift; sourceTree = "<group>"; };
 		39528A9A2C27EFA5005AEA5A /* HTMLTranslate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLTranslate.swift; sourceTree = "<group>"; };
@@ -141,7 +137,6 @@
 				392C59512C248CDB004FA0B1 /* QueContentVoiceCell.swift */,
 				3933FD032C3199A100B4744F /* QueContentSelectCell.swift */,
 				3933FD042C3199A100B4744F /* QueContentSelectCell.xib */,
-				3946C45D2C3C45E700AF7DBA /* QueContentSelectContentCell.swift */,
 				3946C4612C3C4AEC00AF7DBA /* QueContentSelectOptionCell.swift */,
 			);
 			path = Cell;
@@ -160,7 +155,6 @@
 				392C595B2C248CDB004FA0B1 /* QueContentTitleModel.swift */,
 				392C595C2C248CDB004FA0B1 /* QueContentVideoModel.swift */,
 				392C595D2C248CDB004FA0B1 /* QueContentVoiceModel.swift */,
-				3946C45B2C3C45A300AF7DBA /* QueContentSelectContentModel.swift */,
 				3946C45F2C3C49C800AF7DBA /* QueContentSelectOptionModel.swift */,
 			);
 			path = Model;
@@ -361,7 +355,6 @@
 				3961E1072C16FF64009F13C4 /* TFHpple.m in Sources */,
 				392C596C2C248CDB004FA0B1 /* QueContentVideoCell.swift in Sources */,
 				392C59632C248CDB004FA0B1 /* QueContentEssayCell.swift in Sources */,
-				3946C45C2C3C45A300AF7DBA /* QueContentSelectContentModel.swift in Sources */,
 				39528A9B2C27EFA5005AEA5A /* HTMLTranslate.swift in Sources */,
 				392C59782C248CDB004FA0B1 /* QueContentVoiceModel.swift in Sources */,
 				392C59772C248CDB004FA0B1 /* QueContentVideoModel.swift in Sources */,
@@ -372,7 +365,6 @@
 				392C596D2C248CDB004FA0B1 /* QueContentVoiceCell.swift in Sources */,
 				392C596E2C248CDB004FA0B1 /* QueContentDescribeModel.swift in Sources */,
 				3933FD022C31299900B4744F /* QueDetailViewController.swift in Sources */,
-				3946C45E2C3C45E700AF7DBA /* QueContentSelectContentCell.swift in Sources */,
 				392C59762C248CDB004FA0B1 /* QueContentTitleModel.swift in Sources */,
 				392C596F2C248CDB004FA0B1 /* QueContentEssayModel.swift in Sources */,
 				392C59712C248CDB004FA0B1 /* QueContentImgModel.swift in Sources */,

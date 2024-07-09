@@ -15,7 +15,16 @@ class QueDetailViewController: UIViewController {
     
     var index: Int = 0 {
         didSet {
-            self.models = QueContentResolver.contentResolver(queLevel1: queLevel1, queLevel2: queLevel2Arr[index])
+            let queLevel2 = queLevel2Arr[index]
+            if queLevel2.type == .FillBlank {
+                self.models = QueContentResolver.fillBlankResolver(queLevel2: queLevel2, isResult: false)
+            } else if queLevel2.type == .SelectFillBlank {
+                self.models = QueContentResolver.selectFillBlankResolver(queLevel2: queLevel2, isResult: false)
+            } else if queLevel2.type == .Essay {
+                self.models = QueContentResolver.essayResolver(queLevel2: queLevel2, isResult: false)
+            } else {
+                self.models = QueContentResolver.normalResolver(queLevel2: queLevel2, isResult: false)
+            }
             for model in models {
                 if let fillBlankModel = model as? QueContentFillBlankModel {
                     fillBlankModel.delegate = self
@@ -170,6 +179,11 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
         } else if let voiceModel = model as? QueContentVoiceModel {
             let cell = tableView.dequeueReusableCell(QueContentVoiceCell.self, indexPath: indexPath)
             cell.model = voiceModel
+            cell.selectionStyle = .none
+            return cell
+        } else if let selectOptionModel = model as? QueContentSelectOptionModel {
+            let cell = tableView.dequeueReusableCell(QueContentSelectOptionCell.self, indexPath: indexPath)
+            cell.model = selectOptionModel
             cell.selectionStyle = .none
             return cell
         }

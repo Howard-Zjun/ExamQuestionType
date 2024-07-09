@@ -25,6 +25,9 @@ class QueContentEssayCell: UITableViewCell {
     
     var model: QueContentEssayModel! {
         didSet {
+            textView.isSelectable = !model.isResult
+            textView.isUserInteractionEnabled = !model.isResult
+            
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
             textView.text = model.getAnswer()

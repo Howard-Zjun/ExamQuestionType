@@ -22,7 +22,7 @@ class QueContentEssayModel: NSObject, QueContentModel {
     let isResult: Bool
     
     init?(queLevel2: QueLevel2, index: Int, isResult: Bool) {
-        guard queLevel2.type == .essay else {
+        guard queLevel2.type == .Essay else {
             return nil
         }
         self.queLevel2 = queLevel2

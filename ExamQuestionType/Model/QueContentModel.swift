@@ -7,7 +7,7 @@
 
 import UIKit
 
-protocol QueContentModelDelegate {
+protocol QueContentModelDelegate: NSObjectProtocol {
         
     func contentDidChange(model: QueContentModel)
 }
@@ -238,9 +238,7 @@ class QueContentResolver {
     static func selectResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
         var retModels: [QueContentModel] = []
         
-        if let selectModel = QueContentSelectContentModel(queLevel2: queLevel2, isResult: isResult) {
-            retModels.append(selectModel)
-        }
+        retModels += normalResolver(queLevel2: queLevel2, isResult: isResult)
         
         return retModels
     }

@@ -23,12 +23,17 @@ class QueContentSelectFillBlankModel: NSObject, QueContentModel {
     
     var resultAttributed: NSMutableAttributedString
     
-    let paragraphStyle: NSParagraphStyle
+    lazy var paragraphStyle: NSParagraphStyle = {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 5
+        paragraphStyle.paragraphSpacing = 5
+        return paragraphStyle
+    }()
     
     // 选项
     let options: [String]
     
-    var delegate: QueContentModelDelegate?
+    weak var delegate: QueContentModelDelegate?
     
     var focunsIndex: Int? {
         didSet {
@@ -53,22 +58,22 @@ class QueContentSelectFillBlankModel: NSObject, QueContentModel {
         }
     }
     
+    var isResult: Bool
+    
     init?(queLevel2: QueLevel2, isResult: Bool = false) {
         let no = queLevel2.no ?? ""
         let content = queLevel2.content ?? ""
         let html = no + content
-        guard queLevel2.type == .Select, let options = queLevel2.options, !html.isEmpty else {
+        guard queLevel2.type == .SelectFillBlank, let options = queLevel2.options, !html.isEmpty else {
             return nil
         }
+        
         self.queLevel2 = queLevel2
         self.options = options
         self.allAttrArr = []
         self.fillBlankAttrArr = []
         self.resultAttributed = NSMutableAttributedString()
-        let style = NSMutableParagraphStyle()
-        style.lineSpacing = 5
-        style.paragraphSpacing = 5
-        self.paragraphStyle = style
+        self.isResult = isResult
         super.init()
         
         

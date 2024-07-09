@@ -33,6 +33,9 @@ class QueContentFillBlankCell: UITableViewCell {
 
     var model: QueContentFillBlankModel! {
         didSet {
+            textView.isSelectable = !model.isResult
+            textView.isUserInteractionEnabled = !model.isResult
+            
             model.delegate = self
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
@@ -130,7 +133,6 @@ extension QueContentFillBlankCell: UITextFieldDelegate {
             answer = answer.replacingOccurrences(of: "⌘", with: "")
             model.setAnswer(text: answer)
         }
-        model.updateScore()
     }
 }
 
