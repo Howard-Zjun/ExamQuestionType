@@ -156,7 +156,7 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
             cell.selectionStyle = .none
             return cell
         } else if let selectModel = model as? QueContentSelectFillBlankModel {
-            let cell = tableView.dequeueReusableCell(QueContentSelectCell.self, indexPath: indexPath)
+            let cell = tableView.dequeueReusableCell(QueContentSelectFillBlankCell.self, indexPath: indexPath)
             cell.model = selectModel
             cell.contentSizeBeginChange = {
                 tableView.beginUpdates()
@@ -189,6 +189,11 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         return UITableViewCell()
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        let model = models[indexPath.row]
+        return model.estimatedHeight ?? UITableView.automaticDimension
     }
 }
 

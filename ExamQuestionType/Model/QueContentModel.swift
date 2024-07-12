@@ -17,6 +17,8 @@ protocol QueContentModel {
     var cellType: UITableViewCell.Type { get }
     
     var contentInset: UIEdgeInsets { set get } 
+    
+    var estimatedHeight: CGFloat? { get set }
 }
 
 class QueContentResolver {
@@ -66,12 +68,12 @@ class QueContentResolver {
             return []
         }
         
-        let tempModels = normalResolver(html: html, isResult: isResult)
+        let tempModels = normalResolver(queLevel2: queLevel2, html: html, isResult: isResult)
         
         return fixDescribe(contentModels: tempModels)
     }
     
-    static func normalResolver(html: String, isResult: Bool) -> [QueContentModel] {
+    static func normalResolver(queLevel2: QueLevel2, html: String, isResult: Bool) -> [QueContentModel] {
         var ret: [QueContentModel] = []
         let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)")
 
@@ -94,7 +96,7 @@ class QueContentResolver {
                 let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
                 let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
 
-                let tempRet = normalResolver(html: content, isResult: isResult)
+                let tempRet = normalResolver(queLevel2: queLevel2, html: content, isResult: isResult)
                 // 处理对齐
                 if let aligment = tempStr.resolverPAligment() {
                     for temp in tempRet {
@@ -108,7 +110,7 @@ class QueContentResolver {
                     ret.append(describeModel)
                 }
             } else if tempStr.hasPrefix("<table") {
-                if let tableModel = QueContentTableModel(html: tempStr) {
+                if let tableModel = QueContentTableModel(queLevel2: queLevel2, html: tempStr, isResult: isResult) {
                     ret.append(tableModel)
                 }
             } else if tempStr.hasPrefix("<img") {
@@ -186,7 +188,7 @@ class QueContentResolver {
                     ret.append(describeModel)
                 }
             } else if tempStr.hasPrefix("<table") {
-                if let tableModel = QueContentTableModel(html: tempStr) {
+                if let tableModel = QueContentTableModel(queLevel2: queLevel2, html: tempStr, isResult: isResult) {
                     ret.append(tableModel)
                 }
             } else if tempStr.hasPrefix("<img") {

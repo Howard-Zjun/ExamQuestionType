@@ -15,6 +15,8 @@ class QueContentImgModel: NSObject, QueContentModel {
     
     var contentInset: UIEdgeInsets = .zero
     
+    var estimatedHeight: CGFloat?
+
     let imageModel: ImgModel
     
     init(model: ImgModel) {

@@ -30,8 +30,13 @@ class QueContentEssayCell: UITableViewCell {
             
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
+            
             textView.text = model.getAnswer()
-            textViewHeight.constant = textView.contentSize.height
+            if let estimatedHeight = model.estimatedHeight {
+                textViewHeight.constant = estimatedHeight
+            } else {
+                textViewHeight.constant = textView.contentSize.height
+            }
         }
     }
     
@@ -61,8 +66,10 @@ class QueContentEssayCell: UITableViewCell {
         contentSizeWillChange?()
         
         if textView.contentSize.height < 30 {
+            model.estimatedHeight = 30
             textViewHeight.constant = 30
         } else {
+            model.estimatedHeight = textView.contentSize.height
             textViewHeight.constant = textView.contentSize.height
         }
         

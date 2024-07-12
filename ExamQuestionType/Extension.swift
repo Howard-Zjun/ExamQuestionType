@@ -59,35 +59,8 @@ struct HandleType: OptionSet {
     static let bTag = HandleType(rawValue: 1 << 2)
     static let br = HandleType(rawValue: 1 << 3)
     static let blk = HandleType(rawValue: 1 << 4)
-}
-
-extension NSAttributedString {
-    
-    static func emptyFillBlankAttrStr(index: Int, isFocus: Bool = false, paragraphStyle: NSParagraphStyle = .default) -> NSMutableAttributedString {
-        // 只能逐个添加，使用 addAttribute 添加附件没有效果
-        let ret = NSMutableAttributedString()
-        ret.append(.init(string: "⌘"))
-        
-        if isFocus {
-            ret.append(.init(string: "⌘"))
-        } else {
-            let attachment = NSTextAttachment(image: .init(named: "blank_icon_edit")!)
-            attachment.bounds = .init(x: 0, y: 0, width: 18, height: 18)
-            ret.append(.init(attachment: attachment))
-        }
-        
-        ret.append(.init(string: "⌘"))
-        
-        ret.addAttributes([
-            .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-            .underlineColor : isFocus ? UIColor(hex: 0x2F81FB) : UIColor.black,
-            .link : "\(snFillBlankURLPrefix)\(snSeparate)\(index)",
-            .font : UIFont.systemFont(ofSize: 18),
-            .foregroundColor : UIColor.clear,
-            .paragraphStyle : paragraphStyle,
-        ], range: .init(location: 0, length: ret.length))
-        return ret
-    }
+    static let aTag = HandleType(rawValue: 1 << 5)
+    static let strongTag = HandleType(rawValue: 1 << 6)
 }
 
 extension String {
@@ -131,7 +104,7 @@ extension String {
         return attr
     }
     
-    func fillBlankAttr(font: UIFont, link: String, foregroundColor: UIColor = .black,paragraphStyle: NSParagraphStyle = .default) -> NSMutableAttributedString {
+    func fillBlankAttr(font: UIFont, link: String, foregroundColor: UIColor = .black, paragraphStyle: NSParagraphStyle? = nil, isFocus: Bool = false) -> NSMutableAttributedString {
         let ret = NSMutableAttributedString()
         ret.append(.init(string: "⌘", attributes: [
             .foregroundColor : UIColor.clear
@@ -148,10 +121,14 @@ extension String {
         ret.addAttributes([
             .font : font,
             .link : link,
-            .underlineColor : UIColor.black,
+            .underlineColor : isFocus ? UIColor(hex: 0x2F81FB) : UIColor.black,
             .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-            .paragraphStyle : paragraphStyle
         ], range: .init(location: 0, length: ret.length))
+        
+        if let paragraphStyle = paragraphStyle {
+            ret.addAttribute(.paragraphStyle, value: paragraphStyle, range: .init(location: 0, length: ret.length))
+        }
+        
         return ret
     }
     
@@ -172,6 +149,10 @@ extension String {
 
 extension NSMutableAttributedString {
        
+    func textHeight(textWidth: CGFloat) -> CGFloat {
+        self.boundingRect(with: .init(width: textWidth, height: 2000), options: [.usesFontLeading, .usesLineFragmentOrigin], context: nil).size.height
+    }
+    
     static func emptyFillBlankAttrStr(index: Int, paragraphStyle: NSParagraphStyle? = nil, needEmptyPlacehold: Bool = true) -> NSMutableAttributedString {
         // 只能逐个添加，使用 addAttribute 添加附件没有效果
         let ret = NSMutableAttributedString()
@@ -202,22 +183,6 @@ extension NSMutableAttributedString {
     }
     
     func handle(type: HandleType, fontSize: CGFloat, foregroundColor: UIColor? = nil, paragraphStyle: NSParagraphStyle? = nil, baselineOffset: Int? = nil) {
-        if type.contains(.uTag) {
-            handleU()
-        }
-        if type.contains(.iTag) {
-            handleI()
-        }
-        if type.contains(.bTag) {
-            handleB(fontSize: fontSize)
-        }
-        if type.contains(.blk) {
-            handleBLK()
-        }
-        if type.contains(.br) {
-            handleBr()
-        }
-        
         self.addAttributes([
             .font : UIFont.systemFont(ofSize: fontSize)
         ], range: .init(location: 0, length: self.length))
@@ -239,97 +204,169 @@ extension NSMutableAttributedString {
                 .baselineOffset : NSNumber(value: baselineOffset),
             ], range: .init(location: 0, length: self.length))
         }
+        
+        if self.string.contains("<u") && type.contains(.uTag) {
+            handleU()
+        }
+        if self.string.contains("<i") && type.contains(.iTag) {
+            handleI()
+        }
+        if self.string.contains("<blk") && type.contains(.blk) {
+            handleBLK()
+        }
+        if self.string.contains("<br") && type.contains(.br) {
+            handleBr()
+        }
+        if self.string.contains("<b") && type.contains(.bTag) {
+            handleB(fontSize: fontSize)
+        }
+        if self.string.contains("<a") && type.contains(.aTag) {
+            handleA()
+        }
+        if self.string.contains("<strong") && type.contains(.strongTag) {
+            handleStrong(fontSize: fontSize)
+        }
     }
     
     func handleU() {
-        let uRegex = try! NSRegularExpression(pattern: "<u.*?</u>")
+        let uRegex = try! NSRegularExpression(pattern: "<u.*?</u>", options: .dotMatchesLineSeparators)
         var uOffset = 0
         
-        uRegex.enumerateMatches(in: self.string, options: [], range: .init(location: 0, length: self.length)) { match, _, _ in
-            if let range = match?.range {
-                let originContent = (self.string as NSString).substring(with: .init(location: uOffset + range.location, length: range.length))
-                let content = (originContent as NSString).substring(with: .init(location: 3, length: originContent.count - 3 - 4)) // 去掉前后标签
-                
-                self.replaceCharacters(in: .init(location: uOffset + range.location, length: range.length), with: content)
-
-                self.addAttributes([
-                    .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
-                    .underlineColor : UIColor.black,
-                ], range: .init(location: uOffset + range.location, length: content.count))
-                
-                uOffset = uOffset + (content.count - originContent.count)
+        let ranges = uRegex.matches(in: self.string, options: [], range: .init(location: 0, length: self.length)).map({ $0.range })
+        for range in ranges {
+            let originContent = (self.string as NSString).substring(with: .init(location: uOffset + range.location, length: range.length))
+            let firstEnd = (originContent as NSString).range(of: ">").location + 1
+            var content = (originContent as NSString).substring(with: .init(location: firstEnd, length: originContent.count - firstEnd - 4)) // 去掉前后标签
+            
+            var needClearColor = false
+            if content.removeSpace().isEmpty {
+                content = spaceStr
+                needClearColor = true
             }
+            self.replaceCharacters(in: .init(location: uOffset + range.location, length: range.length), with: content)
+
+            self.addAttributes([
+                .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
+                .underlineColor : UIColor.black,
+            ], range: .init(location: uOffset + range.location, length: content.count))
+            
+            if needClearColor {
+                self.addAttributes([
+                    .foregroundColor : UIColor.clear
+                ], range: .init(location: uOffset + range.location, length: content.count))
+            }
+            
+            uOffset = uOffset + (content.count - originContent.count)
         }
     }
     
     func handleI() {
-        let iRegex = try! NSRegularExpression(pattern: "<i.*?</i>")
+        let iRegex = try! NSRegularExpression(pattern: "<i.*?</i>", options: .dotMatchesLineSeparators)
         var iOffset = 0
         
-        iRegex.enumerateMatches(in: self.string, options: [], range: .init(location: 0, length: self.length)) { match, _, _ in
-            if let range = match?.range {
-                let originContent = (self.string as NSString).substring(with: .init(location: iOffset + range.location, length: range.length))
-                let content = (originContent as NSString).substring(with: .init(location: 3, length: originContent.count - 3 - 4)) // 去掉前后标签
-                
-                self.replaceCharacters(in: .init(location: iOffset + range.location, length: range.length), with: content)
+        let ranges = iRegex.matches(in: self.string, options: [], range: .init(location: 0, length: self.length)).map({ $0.range })
+        for range in ranges {
+            let originContent = (self.string as NSString).substring(with: .init(location: iOffset + range.location, length: range.length))
+            let firstEnd = (originContent as NSString).range(of: ">").location + 1
+            let content = (originContent as NSString).substring(with: .init(location: firstEnd, length: originContent.count - firstEnd - 4)) // 去掉前后标签
+            
+            self.replaceCharacters(in: .init(location: iOffset + range.location, length: range.length), with: content)
 
-                self.addAttributes([
-                    .obliqueness : NSNumber(value: 0.5),
-                ], range: .init(location: iOffset + range.location, length: content.count))
-                
-                iOffset = iOffset + (content.count - originContent.count)
-            }
+            self.addAttributes([
+                .obliqueness : NSNumber(value: 0.5),
+            ], range: .init(location: iOffset + range.location, length: content.count))
+            
+            iOffset = iOffset + (content.count - originContent.count)
         }
     }
     
     func handleB(fontSize: CGFloat) {
-        let bRegex = try! NSRegularExpression(pattern: "<b.*?</b>")
+        let bRegex = try! NSRegularExpression(pattern: "<b.*?</b>", options: .dotMatchesLineSeparators)
         var bOffset = 0
         
-        bRegex.enumerateMatches(in: self.string, options: [], range: .init(location: 0, length: self.length)) { match, _, _ in
-            if let range = match?.range {
-                let originContent = (self.string as NSString).substring(with: .init(location: bOffset + range.location, length: range.length))
-                let content = (originContent as NSString).substring(with: .init(location: 3, length: originContent.count - 3 - 4)) // 去掉前后标签
-                
-                self.replaceCharacters(in: .init(location: bOffset + range.location, length: range.length), with: content)
+        let ranges = bRegex.matches(in: self.string, options: [], range: .init(location: 0, length: self.length)).map({ $0.range })
+        for range in ranges {
+            let originContent = (self.string as NSString).substring(with: .init(location: bOffset + range.location, length: range.length))
+            let firstEnd = (originContent as NSString).range(of: ">").location + 1
+            let content = (originContent as NSString).substring(with: .init(location: firstEnd, length: originContent.count - firstEnd - 4)) // 去掉前后标签
+            
+            self.replaceCharacters(in: .init(location: bOffset + range.location, length: range.length), with: content)
 
-                self.addAttributes([
-                    .font : UIFont.systemFont(ofSize: fontSize, weight: .bold),
-                ], range: .init(location: bOffset + range.location, length: content.count))
-                
-                bOffset = bOffset + (content.count - originContent.count)
-            }
+            self.addAttributes([
+                .font : UIFont.systemFont(ofSize: fontSize, weight: .bold),
+            ], range: .init(location: bOffset + range.location, length: content.count))
+            
+            bOffset = bOffset + (content.count - originContent.count)
         }
     }
     
     func handleBLK() {
-        let blkRegex = try! NSRegularExpression(pattern: "(<blk.*?/>)|(<blk.*?</blk>)")
+        let blkRegex = try! NSRegularExpression(pattern: "(<blk.*?/>)|(<blk.*?</blk>)", options: .dotMatchesLineSeparators)
         var blkOffset = 0
         
-        blkRegex.enumerateMatches(in: self.string, options: [], range: .init(location: 0, length: self.length)) { match, _, _ in
-            if let range = match?.range {
-                let content = "___"
-                
-                self.replaceCharacters(in: .init(location: blkOffset + range.location, length: range.length), with: content)
-                
-                blkOffset = blkOffset + (content.count - range.length)
-            }
+        let ranges = blkRegex.matches(in: self.string, options: [], range: .init(location: 0, length: self.length)).map({ $0.range })
+        for range in ranges {
+            let content = "____"
+            
+            self.replaceCharacters(in: .init(location: blkOffset + range.location, length: range.length), with: content)
+            
+            blkOffset = blkOffset + (content.count - range.length)
         }
     }
     
     func handleBr() {
-        let brRegex = try! NSRegularExpression(pattern: "<br/>")
+        let brRegex = try! NSRegularExpression(pattern: "<br.*?/>", options: .dotMatchesLineSeparators)
         var brOffset = 0
         
-        brRegex.enumerateMatches(in: self.string, range: .init(location: 0, length: self.length)) { match, _, _ in
-            if let range = match?.range {
-                
-                let content = "\n"
-                
-                self.replaceCharacters(in: .init(location: brOffset + range.location, length: range.length), with: content)
-                
-                brOffset = brOffset + (content.count - range.length)
-            }
+        let ranges = brRegex.matches(in: self.string, options: [], range: .init(location: 0, length: self.length)).map({ $0.range })
+        for range in ranges {
+            let content = "\n"
+            
+            self.replaceCharacters(in: .init(location: brOffset + range.location, length: range.length), with: content)
+            
+            brOffset = brOffset + (content.count - range.length)
+        }
+    }
+    
+    func handleA() {
+        let aRegex = try! NSRegularExpression(pattern: "<a.*?</a>", options: .dotMatchesLineSeparators)
+        var aOffset = 0
+        
+        let ranges = aRegex.matches(in: self.string, options: [], range: .init(location: 0, length: self.length)).map({ $0.range })
+        for range in ranges {
+            let originContent = (self.string as NSString).substring(with: .init(location: aOffset + range.location, length: range.length))
+            let firstEnd = (originContent as NSString).range(of: ">").location + 1
+            let content = (originContent as NSString).substring(with: .init(location: firstEnd, length: originContent.count - firstEnd - 4)) // 去掉前后标签
+            
+            self.replaceCharacters(in: .init(location: aOffset + range.location, length: range.length), with: content)
+
+            self.addAttributes([
+                .foregroundColor : UIColor(hex: 0x2BF1D1),
+                .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
+                .underlineColor : UIColor(hex: 0x2CF1B6)
+            ], range: .init(location: aOffset + range.location, length: content.count))
+            
+            aOffset = aOffset + (content.count - originContent.count)
+        }
+    }
+    
+    func handleStrong(fontSize: CGFloat) {
+        let sRegex = try! NSRegularExpression(pattern: "<strong.*?</strong>", options: .dotMatchesLineSeparators)
+        var sOffset = 0
+        
+        let ranges = sRegex.matches(in: self.string, options: [], range: .init(location: 0, length: self.length)).map({ $0.range })
+        for range in ranges {
+            let originContent = (self.string as NSString).substring(with: .init(location: sOffset + range.location, length: range.length))
+            let firstEnd = (originContent as NSString).range(of: ">").location + 1
+            let content = (originContent as NSString).substring(with: .init(location: firstEnd, length: originContent.count - firstEnd - 9)) // 去掉前后标签
+            
+            self.replaceCharacters(in: .init(location: sOffset + range.location, length: range.length), with: content)
+
+            self.addAttributes([
+                .font : UIFont.systemFont(ofSize: fontSize, weight: .bold),
+            ], range: .init(location: sOffset + range.location, length: content.count))
+            
+            sOffset = sOffset + (content.count - originContent.count)
         }
     }
 }

@@ -39,8 +39,13 @@ class QueContentFillBlankCell: UITableViewCell {
             model.delegate = self
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
+            
             textView.attributedText = model.resultAttributed
-            textViewHeight.constant = textView.contentSize.height
+            if let estimatedHeight = model.estimatedHeight {
+                textViewHeight.constant = estimatedHeight
+            } else {
+                textViewHeight.constant = textView.contentSize.height
+            }
         }
     }
     
@@ -88,11 +93,15 @@ class QueContentFillBlankCell: UITableViewCell {
     }
     
     @objc func responseSize() {
-        contentSizeWillChange?()
+        model.estimatedHeight = textView.contentSize.height
         
-        textViewHeight.constant = textView.contentSize.height
-        
-        contentSizeDidChange?()
+        if textViewHeight.constant != textView.contentSize.height {
+            contentSizeWillChange?()
+            
+            textViewHeight.constant = textView.contentSize.height
+            
+            contentSizeDidChange?()
+        }
     }
 }
 

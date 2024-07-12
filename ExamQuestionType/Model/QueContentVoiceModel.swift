@@ -16,6 +16,8 @@ class QueContentVoiceModel: NSObject, QueContentModel {
     
     var contentInset: UIEdgeInsets = .zero
     
+    var estimatedHeight: CGFloat?
+
     let queLevel2: QueLevel2
     
     let voiceUrl: String

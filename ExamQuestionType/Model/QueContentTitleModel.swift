@@ -15,6 +15,8 @@ class QueContentTitleModel: NSObject, QueContentModel {
     
     var contentInset: UIEdgeInsets = .init(top: 5, left: 0, bottom: 5, right: 0)
     
+    var estimatedHeight: CGFloat?
+
     let title: String
     
     let qstTitle: String?

@@ -15,6 +15,8 @@ class QueContentVideoModel: NSObject, QueContentModel {
     
     var contentInset: UIEdgeInsets = .zero
     
+    var estimatedHeight: CGFloat?
+
     let videoUrl: String
     
     init?(queLevel2: QueLevel2) {

@@ -15,6 +15,8 @@ class QueContentDescribeModel: NSObject, QueContentModel {
     
     var contentInset: UIEdgeInsets = .zero
     
+    var estimatedHeight: CGFloat?
+    
     let handleContentAttr: NSMutableAttributedString
     
     init(attr: NSMutableAttributedString) {
@@ -43,6 +45,8 @@ class QueContentDescribeModel: NSObject, QueContentModel {
                         pStyle.alignment = .right
                     } else if align.lowercased() == "left" {
                         pStyle.alignment = .right
+                    } else if align.lowercased() == "center" {
+                        pStyle.alignment = .center
                     }
                 }
                 // 去掉<p></p>
@@ -60,10 +64,10 @@ class QueContentDescribeModel: NSObject, QueContentModel {
                     }
                 }
             }
-            handleContentAttr.handle(type: [.uTag, .iTag, .bTag, .blk, .br], fontSize: fontSize, baselineOffset: baselineOffset)
+            handleContentAttr.handle(type: [.uTag, .iTag, .bTag, .blk, .br, .aTag, .strongTag], fontSize: fontSize, baselineOffset: baselineOffset)
             self.init(attr: handleContentAttr)
         } else {
-            let attr = html.handle(type: [.uTag, .iTag, .bTag, .blk, .br], fontSize: fontSize, paragraphStyle: needStyle ? style : nil, baselineOffset: baselineOffset)
+            let attr = html.handle(type: [.uTag, .iTag, .bTag, .blk, .br, .aTag, .strongTag], fontSize: fontSize, paragraphStyle: needStyle ? style : nil, baselineOffset: baselineOffset)
             self.init(attr: attr)
         }
     }

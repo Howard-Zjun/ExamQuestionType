@@ -12,6 +12,11 @@ class QueContentImgCell: UITableViewCell {
     
     var model: QueContentImgModel! {
         didSet {
+            imgView.snp.updateConstraints { make in
+                make.top.equalToSuperview().inset(model.contentInset.top)
+                make.bottom.equalToSuperview().inset(model.contentInset.bottom)
+            }
+            
             if let width = model.imageModel.width, let height = model.imageModel.height {
                 imgView.sd_setImage(with: model.imageModel.src)
                 imgFit(width: width, height: height)
@@ -25,10 +30,6 @@ class QueContentImgCell: UITableViewCell {
                         self?.imgFit(width: 100, height: 100)
                     }
                 }
-            }
-            imgView.snp.updateConstraints { make in
-                make.top.equalToSuperview().inset(model.contentInset.top)
-                make.bottom.equalToSuperview().inset(model.contentInset.bottom)
             }
         }
     }

@@ -14,15 +14,22 @@ class QueContentTableCell: UITableViewCell {
             collectionView.snp.updateConstraints { make in
                 make.top.equalToSuperview().inset(model.contentInset.top)
                 make.bottom.equalToSuperview().inset(model.contentInset.bottom)
-                if let last = model.tableModel.expansionTrModelArr.last {
+                
+                if let estimatedHeight = model.estimatedHeight {
+                    make.height.equalTo(estimatedHeight)
+                } else if let last = model.tableModel.expansionTrModelArr.last {
                     make.height.equalTo(ceil(last.y + last.height))
                 } else {
                     make.height.equalTo(model.tableModel.rowCount * 55)
                 }
             }
+            
+            collectionView.reloadData()
         }
     }
 
+    var contentSizeDidChange: (() -> Void)?
+    
     // MARK: - view
     lazy var collectionView: UICollectionView = {
         let layout = TableCollectionViewFlowLayout()
@@ -70,6 +77,40 @@ extension QueContentTableCell: UICollectionViewDelegateFlowLayout, UICollectionV
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NSStringFromClass(QCTCell.self), for: indexPath) as! QCTCell
         cell.tdModel = model.tableModel.expansionTrModelArr[indexPath.item]
+        cell.indexPath = indexPath
+        cell.actionDidChange = { [weak self] position, indexPath in
+            guard let self = self else { return }
+            for (index, model) in model.tableModel.expansionTrModelArr.enumerated() {
+                if indexPath.item == index {
+                    model.focunsIndex = position - model.fillBlankIndexOffset
+                } else {
+                    model.focunsIndex = nil
+                }
+            }
+            for (index, model) in model.tableModel.expansionTrModelArr.enumerated() {
+                let cell = collectionView.cellForItem(at: .init(item: index, section: 0)) as? QCTCell
+                cell?.tdModel = model
+            }
+        }
+        cell.contentDidChange = { [weak self] indexPath in
+            guard let self = self else { return }
+            model.tableModel.adjustSize()
+            for (index, model) in model.tableModel.expansionTrModelArr.enumerated() {
+                let cell = collectionView.cellForItem(at: .init(item: index, section: 0)) as? QCTCell
+                cell?.frame = .init(x: model.x, y: model.y, width: model.width, height: model.height)
+                print("\(NSStringFromClass(Self.self)) \(#function) index: \(index) width: \(model.width) height: \(model.height)")
+                cell?.tdModel = model
+            }
+            collectionView.snp.updateConstraints { [weak self] make in
+                guard let self = self else { return }
+                if let last = model.tableModel.expansionTrModelArr.last {
+                    make.height.equalTo(ceil(last.y + last.height))
+                } else {
+                    make.height.equalTo(model.tableModel.rowCount * 55)
+                }
+            }
+            contentSizeDidChange?()
+        }
         return cell
     }
 }
@@ -107,36 +148,98 @@ extension QueContentTableCell: TableCollectionViewFlowLayoutDeleagte {
 
 extension QueContentTableCell {
     
-    class QCTCell: UICollectionViewCell {
+    class QCTCell: UICollectionViewCell, UITextFieldDelegate, UITextViewDelegate {
+   
+        var actionDidChange: ((Int, IndexPath) -> Void)?
+        
+        var contentDidChange: ((IndexPath) -> Void)?
+        
+        var indexPath: IndexPath!
         
         var tdModel: EQTableTdModel! {
             didSet {
-                lab.font = tdModel.configModel.font
-                lab.textColor = tdModel.configModel.textColor
-                lab.layer.borderColor = tdModel.configModel.boardColor.cgColor
-                lab.layer.borderWidth = tdModel.configModel.boardWidth
-                lab.backgroundColor = tdModel.configModel.backgroundColor
-                lab.attributedText = tdModel.attr
+                layer.borderColor = tdModel.configModel.boardColor.cgColor
+                layer.borderWidth = tdModel.configModel.boardWidth
+                backgroundColor = tdModel.configModel.backgroundColor
+                textView.attributedText = tdModel.resultAttributed
             }
         }
         
-        lazy var lab: UILabel = {
-            let lab = UILabel(frame: bounds)
-            lab.numberOfLines = 0
-            lab.adjustsFontSizeToFitWidth = true
-            return lab
+        lazy var textField: UITextField = {
+            let textField = UITextField(frame: .init(x: -700, y: 0, width: 30, height: 50))
+            textField.autocorrectionType = .no
+            textField.returnKeyType = .done
+            textField.delegate = self
+            textField.addTarget(self, action: #selector(textDidChange(_:)), for: .editingChanged)
+            return textField
+        }()
+        
+        lazy var textView: DisRangeAbleTextView = {
+            let textView = DisRangeAbleTextView(frame: bounds)
+            textView.delegate = self
+            textView.isEditable = false
+            textView.linkTextAttributes = .init()
+            textView.adjustsFontForContentSizeCategory = true
+            return textView
         }()
         
         override init(frame: CGRect) {
             super.init(frame: frame)
-            contentView.addSubview(lab)
-            lab.snp.makeConstraints { make in
+            contentView.addSubview(textField)
+            contentView.addSubview(textView)
+            textView.snp.makeConstraints { make in
                 make.edges.equalToSuperview()
             }
         }
         
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+        
+        // MARK: - target
+        @objc func textDidChange(_ sender: UITextField) {
+            print("\(NSStringFromClass(Self.self)) \(#function) text: \(sender.text ?? "")")
+            var text = sender.text ?? ""
+            if text.contains("⌘") {
+                text = text.replacingOccurrences(of: "⌘", with: "")
+            }
+            tdModel.setAnswer(text: text)
+            textView.attributedText = tdModel.resultAttributed
+            contentDidChange?(indexPath)
+        }
+        
+        // MARK: - UITextViewDelegate
+        func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
+            print("\(NSStringFromClass(Self.self)) \(#function) url: \(URL.absoluteString)")
+            if URL.absoluteString.hasPrefix(snFillBlankURLPrefix) {
+                if let str = URL.absoluteString.components(separatedBy: snSeparate).last, let index = Int(str) {
+                    
+                    textField.text = tdModel.getAnswer(index: index)
+                    
+                    print("\(NSStringFromClass(Self.self)) \(#function) index: \(index), text: \(textField.text ?? "")")
+                    
+                    textField.becomeFirstResponder()
+                    
+                    actionDidChange?(index, indexPath)
+                }
+            }
+            return false
+        }
+        
+        // MARK: - UITextFieldDelegate
+        func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+            if string == "\n" {
+                textField.endEditing(true)
+                return false
+            }
+            return true
+        }
+        
+        func textFieldDidEndEditing(_ textField: UITextField) {
+            if var answer = textField.text {
+                answer = answer.replacingOccurrences(of: "⌘", with: "")
+                tdModel.setAnswer(text: answer)
+            }
         }
     }
 }

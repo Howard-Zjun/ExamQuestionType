@@ -1,15 +1,22 @@
 import UIKit
 
-class QueContentSelectCell: UITableViewCell {
+class QueContentSelectFillBlankCell: UITableViewCell {
 
     var observation: NSKeyValueObservation?
 
     var model: QueContentSelectFillBlankModel! {
         didSet {
             model.delegate = self
+            
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
+            
             textView.attributedText = model.resultAttributed
+            if let estimatedHeight = model.estimatedHeight {
+                textViewHeight.constant = estimatedHeight
+            } else {
+                textViewHeight.constant = textView.contentSize.height
+            }
         }
     }
     
@@ -48,16 +55,20 @@ class QueContentSelectCell: UITableViewCell {
     
     // MARK: - target
     @objc func responseSize() {
-        contentSizeBeginChange?()
+        model.estimatedHeight = textView.contentSize.height
         
-        textViewBottom.constant = textView.contentSize.height
-        
-        contentSizeDidChange?()
+        if textViewHeight.constant != textView.contentSize.height {
+            contentSizeBeginChange?()
+            
+            textViewHeight.constant = textView.contentSize.height
+            
+            contentSizeDidChange?()
+        }
     }
 }
 
 // MARK: - UITextViewDelegate
-extension QueContentSelectCell: UITextViewDelegate {
+extension QueContentSelectFillBlankCell: UITextViewDelegate {
     
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
         print("\(NSStringFromClass(Self.self)) \(#function) url: \(URL.absoluteString)")
@@ -71,7 +82,7 @@ extension QueContentSelectCell: UITextViewDelegate {
 }
 
 // MARK: - QueContentModelDelegate
-extension QueContentSelectCell: QueContentModelDelegate {
+extension QueContentSelectFillBlankCell: QueContentModelDelegate {
     
     func contentDidChange(model: any QueContentModel) {
         textView.attributedText = self.model.resultAttributed
