@@ -15,10 +15,16 @@ class QueContentDescribeCell: UITableViewCell {
     
     @IBOutlet weak var textViewBottom: NSLayoutConstraint!
     
+    @IBOutlet weak var textViewLeft: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewRight: NSLayoutConstraint!
+    
     var model: QueContentDescribeModel! {
         didSet {
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
+            textViewLeft.constant = model.contentInset.left
+            textViewRight.constant = model.contentInset.right
             
             textView.attributedText = model.handleContentAttr
             if let estimatedHeight = model.estimatedHeight {

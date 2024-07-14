@@ -221,7 +221,9 @@ class QueContentResolver {
     static func fillBlankResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
         var retModels: [QueContentModel] = []
         
-        if let fillBlankModel = QueContentFillBlankModel(queLevel2: queLevel2, isResult: isResult) {
+        if let tableFillBlankModel = QueContentTableModel(queLevel2: queLevel2, isResult: isResult) {
+            retModels.append(tableFillBlankModel)
+        } else if let fillBlankModel = QueContentFillBlankModel(queLevel2: queLevel2, isResult: isResult) {
             retModels.append(fillBlankModel)
         }
         
@@ -241,6 +243,9 @@ class QueContentResolver {
         var retModels: [QueContentModel] = []
         
         retModels += normalResolver(queLevel2: queLevel2, isResult: isResult)
+        if let selectOptionModel = QueContentSelectOptionModel(queLevel2: queLevel2, isResult: isResult) {
+            retModels.append(selectOptionModel)
+        }
         
         return retModels
     }

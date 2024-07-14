@@ -30,6 +30,8 @@
 		392C59782C248CDB004FA0B1 /* QueContentVoiceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C595D2C248CDB004FA0B1 /* QueContentVoiceModel.swift */; };
 		392C597A2C248E35004FA0B1 /* QueLevel1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C59792C248E35004FA0B1 /* QueLevel1.swift */; };
 		392C597C2C248E3C004FA0B1 /* QueLevel2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C597B2C248E3C004FA0B1 /* QueLevel2.swift */; };
+		392FF8532C427AF60050C381 /* FillBlankViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392FF8522C427AF60050C381 /* FillBlankViewController.swift */; };
+		392FF8552C427E440050C381 /* SelectFillBlankOptionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392FF8542C427E440050C381 /* SelectFillBlankOptionCell.swift */; };
 		3933FD022C31299900B4744F /* QueDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3933FD012C31299900B4744F /* QueDetailViewController.swift */; };
 		3933FD052C3199A100B4744F /* QueContentSelectFillBlankCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3933FD042C3199A100B4744F /* QueContentSelectFillBlankCell.xib */; };
 		3933FD062C3199A100B4744F /* QueContentSelectFillBlankCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3933FD032C3199A100B4744F /* QueContentSelectFillBlankCell.swift */; };
@@ -73,6 +75,8 @@
 		392C595D2C248CDB004FA0B1 /* QueContentVoiceModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueContentVoiceModel.swift; sourceTree = "<group>"; };
 		392C59792C248E35004FA0B1 /* QueLevel1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueLevel1.swift; sourceTree = "<group>"; };
 		392C597B2C248E3C004FA0B1 /* QueLevel2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueLevel2.swift; sourceTree = "<group>"; };
+		392FF8522C427AF60050C381 /* FillBlankViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillBlankViewController.swift; sourceTree = "<group>"; };
+		392FF8542C427E440050C381 /* SelectFillBlankOptionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectFillBlankOptionCell.swift; sourceTree = "<group>"; };
 		3933FD012C31299900B4744F /* QueDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueDetailViewController.swift; sourceTree = "<group>"; };
 		3933FD032C3199A100B4744F /* QueContentSelectFillBlankCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentSelectFillBlankCell.swift; sourceTree = "<group>"; };
 		3933FD042C3199A100B4744F /* QueContentSelectFillBlankCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = QueContentSelectFillBlankCell.xib; sourceTree = "<group>"; };
@@ -185,8 +189,10 @@
 				3961E0B82C16F4C6009F13C4 /* AppDelegate.swift */,
 				3961E0BC2C16F4C6009F13C4 /* ViewController.swift */,
 				3933FD012C31299900B4744F /* QueDetailViewController.swift */,
+				392FF8522C427AF60050C381 /* FillBlankViewController.swift */,
 				392C59792C248E35004FA0B1 /* QueLevel1.swift */,
 				392C597B2C248E3C004FA0B1 /* QueLevel2.swift */,
+				392FF8542C427E440050C381 /* SelectFillBlankOptionCell.swift */,
 				3961E0BE2C16F4C6009F13C4 /* Main.storyboard */,
 				3961E0C12C16F4C8009F13C4 /* Assets.xcassets */,
 				3961E0C32C16F4C8009F13C4 /* LaunchScreen.storyboard */,
@@ -342,9 +348,11 @@
 				392C59742C248CDB004FA0B1 /* QueContentSelectFillBlankModel.swift in Sources */,
 				3961E0BD2C16F4C6009F13C4 /* ViewController.swift in Sources */,
 				39528A9D2C27F6FC005AEA5A /* Tool.swift in Sources */,
+				392FF8552C427E440050C381 /* SelectFillBlankOptionCell.swift in Sources */,
 				3961E1082C16FF64009F13C4 /* TFHppleElement.m in Sources */,
 				392C59612C248CDB004FA0B1 /* QueContentDescribeCell.swift in Sources */,
 				392C59672C248CDB004FA0B1 /* QueContentImgCell.swift in Sources */,
+				392FF8532C427AF60050C381 /* FillBlankViewController.swift in Sources */,
 				39528A9F2C27FE9F005AEA5A /* Extension.swift in Sources */,
 				3961E1092C16FF64009F13C4 /* XPathQuery.m in Sources */,
 				392C59722C248CDB004FA0B1 /* QueContentModel.swift in Sources */,
@@ -523,7 +531,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Z853VKPG4P;
+				DEVELOPMENT_TEAM = C6TTF7VT5L;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ExamQuestionType/Info.plist;
@@ -555,7 +563,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Z853VKPG4P;
+				DEVELOPMENT_TEAM = C6TTF7VT5L;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ExamQuestionType/Info.plist;

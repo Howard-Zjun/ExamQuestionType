@@ -14,6 +14,8 @@ class QueContentTableCell: UITableViewCell {
             collectionView.snp.updateConstraints { make in
                 make.top.equalToSuperview().inset(model.contentInset.top)
                 make.bottom.equalToSuperview().inset(model.contentInset.bottom)
+                make.left.equalToSuperview().inset(model.contentInset.left)
+                make.right.equalToSuperview().inset(model.contentInset.right)
                 
                 if let estimatedHeight = model.estimatedHeight {
                     make.height.equalTo(estimatedHeight)
@@ -51,7 +53,8 @@ class QueContentTableCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         contentView.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(20)
+            make.left.equalToSuperview().inset(20)
+            make.right.equalToSuperview().inset(20)
             make.top.equalToSuperview().inset(0)
             make.bottom.equalToSuperview().inset(0)
             make.height.equalTo(300)
@@ -94,7 +97,7 @@ extension QueContentTableCell: UICollectionViewDelegateFlowLayout, UICollectionV
         }
         cell.contentDidChange = { [weak self] indexPath in
             guard let self = self else { return }
-            model.tableModel.adjustSize()
+            model.tableModel.adjustSize(contentWidth: kScreenWidth - model.contentInset.left - model.contentInset.right)
             for (index, model) in model.tableModel.expansionTrModelArr.enumerated() {
                 let cell = collectionView.cellForItem(at: .init(item: index, section: 0)) as? QCTCell
                 cell?.frame = .init(x: model.x, y: model.y, width: model.width, height: model.height)

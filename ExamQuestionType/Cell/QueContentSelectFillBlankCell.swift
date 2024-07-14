@@ -1,24 +1,6 @@
 import UIKit
 
 class QueContentSelectFillBlankCell: UITableViewCell {
-
-    var observation: NSKeyValueObservation?
-
-    var model: QueContentSelectFillBlankModel! {
-        didSet {
-            model.delegate = self
-            
-            textViewTop.constant = model.contentInset.top
-            textViewBottom.constant = model.contentInset.bottom
-            
-            textView.attributedText = model.resultAttributed
-            if let estimatedHeight = model.estimatedHeight {
-                textViewHeight.constant = estimatedHeight
-            } else {
-                textViewHeight.constant = textView.contentSize.height
-            }
-        }
-    }
     
     var contentSizeBeginChange: (() -> Void)?
     
@@ -32,6 +14,31 @@ class QueContentSelectFillBlankCell: UITableViewCell {
     
     @IBOutlet weak var textViewBottom: NSLayoutConstraint!
     
+    @IBOutlet weak var textViewLeft: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewRight: NSLayoutConstraint!
+    
+    var observation: NSKeyValueObservation?
+
+    var model: QueContentSelectFillBlankModel! {
+        didSet {
+            model.delegate = self
+            
+            textViewTop.constant = model.contentInset.top
+            textViewBottom.constant = model.contentInset.bottom
+            textViewLeft.constant = model.contentInset.left
+            textViewRight.constant = model.contentInset.right
+            
+            textView.attributedText = model.resultAttributed
+            if let estimatedHeight = model.estimatedHeight {
+                textViewHeight.constant = estimatedHeight
+            } else {
+                textViewHeight.constant = textView.contentSize.height
+            }
+        }
+    }
+    
+    // MARK: - view
     @IBOutlet weak var textView: UITextView! {
         didSet {
             textView.font = .systemFont(ofSize: 18)
@@ -73,8 +80,12 @@ extension QueContentSelectFillBlankCell: UITextViewDelegate {
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
         print("\(NSStringFromClass(Self.self)) \(#function) url: \(URL.absoluteString)")
         if URL.absoluteString.hasPrefix(snFillBlankURLPrefix) {
-            if let postionString = URL.absoluteString.components(separatedBy: snSeparate).last{
-                self.actionDidChange?(Int(postionString) ?? 0)
+            if let str = URL.absoluteString.components(separatedBy: snSeparate).last, let index = Int(str) {
+                
+                let answer: Int? = model.getAnswer(index: index)
+                print("\(NSStringFromClass(Self.self)) \(#function) index: \(index), text: \(String(describing: answer))")
+                
+                self.actionDidChange?(index)
             }
         }
         return false

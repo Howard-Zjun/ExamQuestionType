@@ -11,28 +11,40 @@ class QueDetailViewController: UIViewController {
 
     var queLevel1: QueLevel1!
     
-    var queLevel2Arr: [QueLevel2]!
-    
-    var index: Int = 0 {
+    var index = 0 {
         didSet {
-            let queLevel2 = queLevel2Arr[index]
-            if queLevel2.type == .FillBlank {
-                self.models = QueContentResolver.fillBlankResolver(queLevel2: queLevel2, isResult: false)
-            } else if queLevel2.type == .SelectFillBlank {
-                self.models = QueContentResolver.selectFillBlankResolver(queLevel2: queLevel2, isResult: false)
-            } else if queLevel2.type == .Essay {
-                self.models = QueContentResolver.essayResolver(queLevel2: queLevel2, isResult: false)
-            } else {
-                self.models = QueContentResolver.normalResolver(queLevel2: queLevel2, isResult: false)
-            }
-            for model in models {
-                if let fillBlankModel = model as? QueContentFillBlankModel {
-                    fillBlankModel.delegate = self
-                } else if let selectModel = model as? QueContentSelectFillBlankModel {
-                    selectModel.delegate = self
+            queLevel2 = queLevel1.queLevel2Arr[index]
+        }
+    }
+    
+    var queLevel2: QueLevel2! {
+        didSet {
+            var queue: [QueLevel2] = [queLevel2]
+            var models: [QueContentModel] = []
+            var index = 0
+            while index < queue.count {
+                let temp = queue[index]
+                
+                if temp.type == .FillBlank {
+                    models += QueContentResolver.fillBlankResolver(queLevel2: temp, isResult: false)
+                } else if temp.type == .SelectFillBlank {
+                    models += QueContentResolver.selectFillBlankResolver(queLevel2: temp, isResult: false)
+                } else if temp.type == .Essay {
+                    models += QueContentResolver.essayResolver(queLevel2: temp, isResult: false)
+                } else if temp.type == .Select {
+                    models += QueContentResolver.selectResolver(queLevel2: temp, isResult: false)
+                } else {
+                    models += QueContentResolver.normalResolver(queLevel2: temp, isResult: false)
                 }
+                
+                if !temp.isNormal, let subLevel2 = temp.subLevel2 {
+                    queue += subLevel2
+                }
+                
+                index += 1
             }
-            tableView.reloadData()
+            
+            self.models = models
         }
     }
     
@@ -40,10 +52,19 @@ class QueDetailViewController: UIViewController {
         didSet {
             for model in models {
                 tableView.register(model.cellType)
+                
+                if let selectFillBlankModel = model as? QueContentSelectFillBlankModel {
+                    selectFillBlankModel.delegate = self
+                } else if let fillBlankModel = model as? QueContentFillBlankModel {
+                    fillBlankModel.delegate = self
+                }
             }
+            
+            tableView.reloadData()
         }
     }
     
+    // MARK: - view
     lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .init(x: 0, y: 0, width: view.frame.width, height: view.frame.height), style: .plain)
         tableView.delegate = self
@@ -52,54 +73,152 @@ class QueDetailViewController: UIViewController {
         return tableView
     }()
     
-    lazy var previousBtn: UIButton = {
-        let previousBtn = UIButton(frame: .init(x: 0, y: view.kheight - 50, width: view.kwidth * 0.5, height: 50))
-        previousBtn.setTitle("前一个", for: .normal)
-        previousBtn.setTitleColor(.black, for: .normal)
-        previousBtn.addTarget(self, action: #selector(toPrevious), for: .touchUpInside)
-        return previousBtn
+    lazy var bottomHandleView: UIView = {
+        let bottomHandleView = UIView(frame: .init(x: 0, y: view.kheight - 50, width: view.kwidth, height: 50))
+        bottomHandleView.backgroundColor = .init(hex: 0xDBDBDB)
+        return bottomHandleView
     }()
     
     lazy var nextBtn: UIButton = {
-        let nextBtn = UIButton(frame: .init(x: 0, y: view.kwidth * 0.5, width: view.kwidth * 0.5, height: 50))
+        let nextBtn = UIButton(frame: .init(x: view.kwidth - 10 - 100, y: 0, width: 100, height: bottomHandleView.kheight))
         nextBtn.setTitle("下一个", for: .normal)
         nextBtn.setTitleColor(.black, for: .normal)
         nextBtn.addTarget(self, action: #selector(toNext), for: .touchUpInside)
         return nextBtn
     }()
     
+    lazy var previousBtn: UIButton = {
+        let previousBtn = UIButton(frame: .init(x: 10, y: 0, width: 100, height: bottomHandleView.kheight))
+        previousBtn.setTitle("前一个", for: .normal)
+        previousBtn.setTitleColor(.black, for: .normal)
+        previousBtn.addTarget(self, action: #selector(toPrevious), for: .touchUpInside)
+        return previousBtn
+    }()
+    
+    lazy var optionView: UIView = {
+        let optionView = UIView(frame: .init(x: 0, y: 0, width: view.kwidth, height: 100))
+        optionView.isHidden = true
+        optionView.backgroundColor = .init(hex: 0xDBDBDB)
+        return optionView
+    }()
+    
+    lazy var optionTitleLab: UILabel = {
+        let optionTitleLab = UILabel(frame: .init(x: 20, y: 0, width: optionView.kwidth - 40, height: 50))
+        optionTitleLab.font = .systemFont(ofSize: 18)
+        optionTitleLab.textColor = .black
+        optionTitleLab.textAlignment = .left
+        return optionTitleLab
+    }()
+    
+    lazy var optionCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumLineSpacing = 0
+        layout.minimumInteritemSpacing = 0
+        layout.scrollDirection = .horizontal
+        let optionCollectionView = UICollectionView(frame: .init(x: 20, y: optionTitleLab.kmaxY, width: optionView.kwidth - 20, height: optionView.kheight - optionTitleLab.kheight), collectionViewLayout: layout)
+        optionCollectionView.isPagingEnabled = true
+        optionCollectionView.delegate = self
+        optionCollectionView.dataSource = self
+        optionCollectionView.register(SelectFillBlankOptionCell.self)
+        optionCollectionView.showsVerticalScrollIndicator = false
+        return optionCollectionView
+    }()
+    
+    // MARK: - life
     override func viewDidLoad() {
         super.viewDidLoad()
         view.addSubview(tableView)
+        view.addSubview(bottomHandleView)
+        bottomHandleView.addSubview(previousBtn)
+        bottomHandleView.addSubview(nextBtn)
+        view.addSubview(optionView)
+        optionView.addSubview(optionTitleLab)
+        optionView.addSubview(optionCollectionView)
         
+        bottomHandleView.snp.makeConstraints { make in
+            make.left.bottom.right.equalToSuperview()
+            make.height.equalTo(50)
+        }
+        previousBtn.snp.makeConstraints { make in
+            make.left.equalToSuperview().inset(10)
+            make.top.bottom.equalToSuperview()
+            make.width.equalTo(100)
+        }
+        nextBtn.snp.makeConstraints { make in
+            make.right.equalToSuperview().inset(10)
+            make.top.bottom.equalToSuperview()
+            make.width.equalTo(100)
+        }
         tableView.snp.makeConstraints { make in
             make.left.right.equalToSuperview()
             make.top.equalToSuperview().inset(0)
-            make.bottom.equalToSuperview().inset(0)
+            make.bottom.equalTo(optionView.snp.top)
         }
+        optionView.snp.makeConstraints { make in
+            make.left.bottom.right.equalToSuperview()
+        }
+        optionTitleLab.snp.makeConstraints { make in
+            make.left.right.equalToSuperview().inset(20)
+            make.top.equalToSuperview()
+            make.height.equalTo(50)
+        }
+        optionCollectionView.snp.makeConstraints { make in
+            make.left.right.equalToSuperview().inset(20)
+            make.top.equalTo(optionTitleLab.snp.bottom)
+            make.bottom.equalToSuperview()
+            make.height.equalTo(0)
+        }
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     func config(queLevel1: QueLevel1) {
         view.isHidden = false
         self.queLevel1 = queLevel1
-        self.queLevel2Arr = queLevel1.queLevel2Arr
-        
         self.index = 0
     }
     
     // MARK: - target
-    @objc func toPrevious() {
-        if index == 0 {
-            return
+    @objc func toNext() {
+        if index + 1 < queLevel1.queLevel2Arr.count {
+            index += 1
         }
-        index -= 1
     }
     
-    @objc func toNext() {
-        if index == queLevel2Arr.count {
-            return
+    @objc func toPrevious() {
+        if index - 1 >= 0 {
+            index -= 1
         }
-        index += 1
+    }
+    
+    @objc func keyboardWillShow(_ info: Notification) {
+        if let keyboardFrameEnd = info.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+            var changeFrame: CGRect
+            if let keyWindow = kKeyWindow {
+                changeFrame = keyWindow.convert(keyboardFrameEnd, to: view)
+            } else {
+                changeFrame = UIApplication.shared.keyWindow!.convert(keyboardFrameEnd, to: view)
+            }
+            if changeFrame.minY < tableView.kmaxY {
+                optionCollectionView.snp.updateConstraints { make in
+                    make.height.equalTo(view.kheight - changeFrame.minY - 50)
+                }
+            }
+        }
+    }
+    
+    @objc func keyboardWillHide(_ info: Notification) {
+        optionCollectionView.snp.updateConstraints { make in
+            make.height.equalTo(0)
+        }
+        for (index, model) in models.enumerated() {
+            if let fillBlankModel = model as? QueContentFillBlankModel {
+                fillBlankModel.focunsIndex = nil
+                let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentFillBlankCell
+                cell?.textView.resignFirstResponder()
+            }
+        }
     }
 }
 
@@ -139,6 +258,22 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
             cell.selectionStyle = .none
             return cell
+        } else if let selectFillBlankModel = model as? QueContentSelectFillBlankModel {
+            let cell = tableView.dequeueReusableCell(QueContentSelectFillBlankCell.self, indexPath: indexPath)
+            cell.model = selectFillBlankModel
+            cell.contentSizeBeginChange = {
+                tableView.beginUpdates()
+            }
+            cell.contentSizeDidChange = {
+                tableView.endUpdates()
+            }
+            cell.actionDidChange = { [weak self] index in
+                guard let self = self else { return }
+                optionView.isHidden = false
+                toSubject(index: index)
+            }
+            cell.selectionStyle = .none
+            return cell
         } else if let fillBlankModel = model as? QueContentFillBlankModel {
             let cell = tableView.dequeueReusableCell(QueContentFillBlankCell.self, indexPath: indexPath)
             cell.model = fillBlankModel
@@ -153,17 +288,6 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
         } else if let imgModel = model as? QueContentImgModel {
             let cell = tableView.dequeueReusableCell(QueContentImgCell.self, indexPath: indexPath)
             cell.model = imgModel
-            cell.selectionStyle = .none
-            return cell
-        } else if let selectModel = model as? QueContentSelectFillBlankModel {
-            let cell = tableView.dequeueReusableCell(QueContentSelectFillBlankCell.self, indexPath: indexPath)
-            cell.model = selectModel
-            cell.contentSizeBeginChange = {
-                tableView.beginUpdates()
-            }
-            cell.contentSizeDidChange = {
-                tableView.endUpdates()
-            }
             cell.selectionStyle = .none
             return cell
         } else if let tableModel = model as? QueContentTableModel {
@@ -202,8 +326,127 @@ extension QueDetailViewController: QueContentModelDelegate {
     
     func contentDidChange(model: any QueContentModel) {
         for (index, contentModel) in models.enumerated() {
-            if let obj1 = model as? NSObject, let obj2 = contentModel as? NSObject, obj1 == obj2 {
-                tableView.reloadRows(at: [.init(row: index, section: 0)], with: .none)
+            if let obj1 = model as? QueContentFillBlankModel, let obj2 = contentModel as? QueContentFillBlankModel, obj1 == obj2 {
+                let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentFillBlankCell
+                cell?.model = obj2
+            } else if let obj1 = model as? QueContentSelectFillBlankModel, let obj2 = contentModel as? QueContentSelectFillBlankModel, obj1 == obj2 {
+                let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentSelectFillBlankCell
+                cell?.model = obj2
+            }
+        }
+    }
+}
+
+// MARK: - UICollectionViewDelegate, UICollectionViewDataSource
+extension QueDetailViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
+    
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        for model in models {
+            if let selectFillBlankModel = model as? QueContentSelectFillBlankModel {
+                return selectFillBlankModel.options.count
+            }
+        }
+        return 0
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        1
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        for model in models {
+            if let selectFillBlankModel = model as? QueContentSelectFillBlankModel {
+                let cell = collectionView.dequeueReusableCell(SelectFillBlankOptionCell.self, indexPath: indexPath)
+                cell.set(index: indexPath.section, options: selectFillBlankModel.options[indexPath.section], selectIndex: selectFillBlankModel.getAnswer(index: indexPath.section))
+                cell.selectOptionBlock = { [weak self] index, position in
+                    guard let self = self else { return }
+                    selectFillBlankModel.setAnswer(text: Tool.positionToLetter(position: position))
+                    
+                    let selectFillBlankCell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentSelectFillBlankCell
+                    selectFillBlankCell?.model = selectFillBlankModel
+                    
+                    toSubject(index: index + 1)
+                }
+                return cell
+            }
+        }
+        return UICollectionViewCell()
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        for model in models {
+            if let selectFillBlankModel = model as? QueContentSelectFillBlankModel {
+                let count = selectFillBlankModel.options[indexPath.section].count
+                return .init(width: collectionView.kwidth, height: CGFloat(count) * 30 + 50)
+            }
+        }
+        return collectionView.bounds.size
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        0.0
+    }
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        0.0
+    }
+    
+    func toSubject(index: Int) {
+        for model in models {
+            if let selectFillBlankModel = model as? QueContentSelectFillBlankModel {
+                // 超过退出
+                if index >= selectFillBlankModel.options.count {
+                    print("\(NSStringFromClass(Self.self)) \(#function) 跳转 超出")
+                    optionCollectionView.reloadData()
+                    return
+                }
+                
+                optionTitleLab.text = "\(index + 1)、"
+                
+                let lastFocusIndex = selectFillBlankModel.focunsIndex
+                
+                selectFillBlankModel.focunsIndex = index
+                
+                let selectFillBlankCell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentSelectFillBlankCell
+                selectFillBlankCell?.model = selectFillBlankModel
+                
+                
+                if let lastFocusIndex = lastFocusIndex {
+                    print("\(NSStringFromClass(Self.self)) \(#function) 跳转到第\(index)个")
+                    optionCollectionView.scrollToItem(at: .init(item: 0, section: index), at: index > lastFocusIndex ? .right : .left, animated: true)
+                } else {
+                    print("\(NSStringFromClass(Self.self)) \(#function) 首次聚焦 跳转到第\(index)个")
+                    optionCollectionView.reloadData()
+                }
+                
+                let count = selectFillBlankModel.options[index].count
+                optionCollectionView.snp.updateConstraints { make in
+                    make.height.equalTo(count * 30 + 50)
+                }
+            }
+        }
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        if scrollView == optionCollectionView {
+            let item = Int((scrollView.contentOffset.x + 50) / scrollView.kwidth)
+            print("\(NSStringFromClass(Self.self)) \(#function) contentOffset: \(scrollView.contentOffset.x) 手动滚动到第\(item)个")
+
+            optionTitleLab.text = "\(item + 1)、"
+            
+            for (index, model) in models.enumerated() {
+                if let selectFillBlankModel = model as? QueContentSelectFillBlankModel {
+                    selectFillBlankModel.focunsIndex = item
+                    
+                    let selectFillBlankCell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentSelectFillBlankCell
+                    selectFillBlankCell?.model = selectFillBlankModel
+                    
+                    optionCollectionView.reloadItems(at: [.init(item: item, section: 0)])
+                    
+                    let count = selectFillBlankModel.options[item].count
+                    optionCollectionView.snp.updateConstraints { make in
+                        make.height.equalTo(count * 30 + 50)
+                    }
+                }
             }
         }
     }

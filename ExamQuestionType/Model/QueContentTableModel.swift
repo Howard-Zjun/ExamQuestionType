@@ -13,7 +13,7 @@ class QueContentTableModel: NSObject, QueContentModel {
         QueContentTableCell.self
     }
     
-    var contentInset: UIEdgeInsets = .init(top: 10, left: 0, bottom: 10, right: 0)
+    var contentInset: UIEdgeInsets = .init(top: 18, left: 0, bottom: 18, right: 0)
     
     var estimatedHeight: CGFloat?
 
@@ -23,6 +23,7 @@ class QueContentTableModel: NSObject, QueContentModel {
         guard let tableModel = EQTableModel(html: html, queLevel2: queLevel2, isResult: isResult) else {
             return nil
         }
+        tableModel.adjustSize(contentWidth: kScreenWidth - contentInset.left - contentInset.right)
         self.tableModel = tableModel
         if let last = tableModel.expansionTrModelArr.last {
             self.estimatedHeight = last.y + last.height
@@ -157,12 +158,10 @@ class EQTableModel: NSObject {
             print(trModel.tdModelArr.map({"xNum: \($0.xNum) yNum: \($0.yNum) widthNum: \($0.widthNum) heightNum: \($0.heightNum)"}))
             print("------")
         }
-        
-        adjustSize()
     }
     
     /// 单元大小适应
-    func adjustSize(contentWidth: CGFloat = kScreenWidth - 40) {
+    func adjustSize(contentWidth: CGFloat) {
         var arr: [[EQTableTdModel]] = .init(repeating: [], count: rowCount)
         
         for trModel in (theadModel?.trModelArr ?? []) + trModelArr {
@@ -186,7 +185,7 @@ class EQTableModel: NSObject {
                 maxContentHeight = max(maxContentHeight, tdModel.resultAttributed.textHeight(textWidth: tdModel.width) + 20)
             }
             
-            maxY += maxContentHeight + 20
+            maxY += maxContentHeight
             for tdModel in arr[trIndex] {
                 tdModel.height = maxY - tdModel.y
             }

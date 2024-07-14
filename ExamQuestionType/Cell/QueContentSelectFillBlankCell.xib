@@ -19,7 +19,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="H6q-z3-5hD">
-                        <rect key="frame" x="16" y="0.0" width="288" height="150"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="150"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="150" id="IOr-GJ-IQQ"/>
@@ -31,8 +31,8 @@
                     </textView>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="trailing" secondItem="H6q-z3-5hD" secondAttribute="trailing" constant="16" id="GOI-Ga-umR"/>
-                    <constraint firstItem="H6q-z3-5hD" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="16" id="STp-Uq-G0Y"/>
+                    <constraint firstAttribute="trailing" secondItem="H6q-z3-5hD" secondAttribute="trailing" id="GOI-Ga-umR"/>
+                    <constraint firstItem="H6q-z3-5hD" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" id="STp-Uq-G0Y"/>
                     <constraint firstAttribute="bottom" secondItem="H6q-z3-5hD" secondAttribute="bottom" id="Ya4-07-9rG"/>
                     <constraint firstItem="H6q-z3-5hD" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" id="kM3-PL-dtN"/>
                 </constraints>
@@ -42,6 +42,8 @@
                 <outlet property="textView" destination="H6q-z3-5hD" id="dwN-ZM-pzQ"/>
                 <outlet property="textViewBottom" destination="Ya4-07-9rG" id="qs8-cS-hHg"/>
                 <outlet property="textViewHeight" destination="IOr-GJ-IQQ" id="9Ur-s1-kgO"/>
+                <outlet property="textViewLeft" destination="STp-Uq-G0Y" id="ahp-So-KDx"/>
+                <outlet property="textViewRight" destination="GOI-Ga-umR" id="DNf-2G-pMc"/>
                 <outlet property="textViewTop" destination="kM3-PL-dtN" id="3qA-tF-rTt"/>
             </connections>
             <point key="canvasLocation" x="45.801526717557252" y="19.718309859154932"/>

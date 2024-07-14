@@ -11,6 +11,13 @@ let kScreenWidth = UIScreen.main.bounds.width
 
 let kScreenHeight = UIScreen.main.bounds.height
 
+var kKeyWindow: UIWindow? {
+    UIApplication.shared.connectedScenes
+        .filter { $0.activationState == .foregroundActive }
+        .compactMap { $0 as? UIWindowScene }.first?.windows
+        .filter { $0.isKeyWindow }.first
+}
+
 class Tool: NSObject {
 
     static func positionToLetter(position: Int) -> String {

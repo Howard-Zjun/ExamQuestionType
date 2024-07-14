@@ -13,7 +13,7 @@ class QueContentSelectOptionModel: NSObject, QueContentModel {
         QueContentSelectOptionCell.self
     }
     
-    var contentInset: UIEdgeInsets = .init(top: 10, left: 0, bottom: 0, right: 0)
+    var contentInset: UIEdgeInsets = .init(top: 10, left: 18, bottom: 0, right: 18)
     
     var estimatedHeight: CGFloat?
 
@@ -23,12 +23,15 @@ class QueContentSelectOptionModel: NSObject, QueContentModel {
     
     var selectIndex: Int?
     
-    init?(queLevel2: QueLevel2) {
+    let isResult: Bool
+    
+    init?(queLevel2: QueLevel2, isResult: Bool) {
         guard let options = queLevel2.options, !options.isEmpty else {
             return nil
         }
         
         self.options = options
         self.queLevel2 = queLevel2
+        self.isResult = isResult
     }
 }

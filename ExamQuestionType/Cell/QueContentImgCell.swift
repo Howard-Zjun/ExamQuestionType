@@ -60,9 +60,10 @@ class QueContentImgCell: UITableViewCell {
     func imgFit(width: CGFloat, height: CGFloat) {
         var width = width
         var height = height
-        if width > kScreenWidth - 40 {
-            height = (kScreenWidth - 40) / width * height
-            width = kScreenWidth - 40
+        let p = model.contentInset.left + model.contentInset.right
+        if width > kScreenWidth - p {
+            height = (kScreenWidth - p) / width * height
+            width = kScreenWidth - p
         }
         imgView.snp.updateConstraints { make in
             make.width.equalTo(width)

@@ -31,14 +31,21 @@ class QueContentFillBlankCell: UITableViewCell {
     
     @IBOutlet weak var textViewHeight: NSLayoutConstraint!
 
+    @IBOutlet weak var textViewLeft: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewRight: NSLayoutConstraint!
+    
     var model: QueContentFillBlankModel! {
         didSet {
+            model.delegate = self
+
             textView.isSelectable = !model.isResult
             textView.isUserInteractionEnabled = !model.isResult
             
-            model.delegate = self
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
+            textViewLeft.constant = model.contentInset.left
+            textViewRight.constant = model.contentInset.right
             
             textView.attributedText = model.resultAttributed
             if let estimatedHeight = model.estimatedHeight {
@@ -89,7 +96,6 @@ class QueContentFillBlankCell: UITableViewCell {
             text = text.replacingOccurrences(of: "⌘", with: "")
         }
         model.setAnswer(text: sender.text ?? "")
-        textView.attributedText = model.resultAttributed
     }
     
     @objc func responseSize() {
@@ -109,11 +115,9 @@ class QueContentFillBlankCell: UITableViewCell {
 extension QueContentFillBlankCell: UITextViewDelegate {
  
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
-        print("\(NSStringFromClass(Self.self)) \(#function) url: \(URL.absoluteString)")
         if URL.absoluteString.hasPrefix(snFillBlankURLPrefix) {
             if let str = URL.absoluteString.components(separatedBy: snSeparate).last, let index = Int(str) {
                 model.focunsIndex = index
-                textView.attributedText = model.resultAttributed
                 
                 textField.text = model.getAnswer(index: index)
                 

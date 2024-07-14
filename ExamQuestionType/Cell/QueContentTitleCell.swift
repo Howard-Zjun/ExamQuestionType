@@ -15,9 +15,13 @@ class QueContentTitleCell: UITableViewCell {
             qsTitleLab.text = model.qstTitle
             titleLab.snp.updateConstraints { make in
                 make.top.equalToSuperview().inset(model.contentInset.top)
+                make.left.equalToSuperview().inset(model.contentInset.left)
+                make.right.equalToSuperview().inset(model.contentInset.right)
             }
             qsTitleLab.snp.updateConstraints { make in
                 make.bottom.equalToSuperview().inset(model.contentInset.bottom)
+                make.left.equalToSuperview().inset(model.contentInset.left)
+                make.right.equalToSuperview().inset(model.contentInset.right)
             }
         }
     }
@@ -49,11 +53,13 @@ class QueContentTitleCell: UITableViewCell {
         contentView.addSubview(titleLab)
         contentView.addSubview(qsTitleLab)
         titleLab.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(18)
+            make.left.equalToSuperview().inset(18)
+            make.right.equalToSuperview().inset(18)
             make.top.equalToSuperview().inset(0)
         }
         qsTitleLab.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(18)
+            make.left.equalToSuperview().inset(18)
+            make.right.equalToSuperview().inset(18)
             make.top.equalTo(titleLab.snp.bottom).offset(12)
             make.bottom.equalToSuperview().inset(0)
         }

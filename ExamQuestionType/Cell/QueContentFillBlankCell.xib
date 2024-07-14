@@ -25,7 +25,7 @@
                         <textInputTraits key="textInputTraits"/>
                     </textField>
                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="O6U-jD-m8L" userLabel="Text View" customClass="DisRangeAbleTextView" customModule="ExamQuestionType" customModuleProvider="target">
-                        <rect key="frame" x="18" y="0.0" width="284" height="150"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="150"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="150" id="qm4-tI-aE6"/>
@@ -36,9 +36,9 @@
                     </textView>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="O6U-jD-m8L" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="18" id="8kq-X1-7Wh"/>
+                    <constraint firstItem="O6U-jD-m8L" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" id="8kq-X1-7Wh"/>
                     <constraint firstAttribute="bottom" secondItem="O6U-jD-m8L" secondAttribute="bottom" id="KxG-lP-fJc"/>
-                    <constraint firstAttribute="trailing" secondItem="O6U-jD-m8L" secondAttribute="trailing" constant="18" id="NA4-i6-1E1"/>
+                    <constraint firstAttribute="trailing" secondItem="O6U-jD-m8L" secondAttribute="trailing" id="NA4-i6-1E1"/>
                     <constraint firstItem="O6U-jD-m8L" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" id="iwg-Cs-fOM"/>
                 </constraints>
             </tableViewCellContentView>
@@ -48,6 +48,8 @@
                 <outlet property="textView" destination="O6U-jD-m8L" id="7js-lr-md5"/>
                 <outlet property="textViewBottom" destination="KxG-lP-fJc" id="iQ0-Ux-cHe"/>
                 <outlet property="textViewHeight" destination="qm4-tI-aE6" id="jJd-G9-Weo"/>
+                <outlet property="textViewLeft" destination="8kq-X1-7Wh" id="HMa-Wl-VNU"/>
+                <outlet property="textViewRight" destination="NA4-i6-1E1" id="rrq-wN-M2j"/>
                 <outlet property="textViewTop" destination="iwg-Cs-fOM" id="1Sl-lE-gvX"/>
             </connections>
             <point key="canvasLocation" x="139" y="21"/>

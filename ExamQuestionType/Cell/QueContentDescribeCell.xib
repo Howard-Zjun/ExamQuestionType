@@ -19,7 +19,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" textAlignment="natural" selectable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MKs-hM-6Kt" customClass="DisRangeAbleTextView" customModule="ExamQuestionType" customModuleProvider="target">
-                        <rect key="frame" x="18" y="0.0" width="284" height="50"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="50"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="50" id="q0w-DR-U8n"/>
@@ -30,8 +30,8 @@
                     </textView>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="trailing" secondItem="MKs-hM-6Kt" secondAttribute="trailing" constant="18" id="SG4-kW-XBa"/>
-                    <constraint firstItem="MKs-hM-6Kt" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="18" id="cZv-PR-34W"/>
+                    <constraint firstAttribute="trailing" secondItem="MKs-hM-6Kt" secondAttribute="trailing" id="SG4-kW-XBa"/>
+                    <constraint firstItem="MKs-hM-6Kt" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" id="cZv-PR-34W"/>
                     <constraint firstItem="MKs-hM-6Kt" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" id="dfM-Bf-pUx"/>
                     <constraint firstItem="MKs-hM-6Kt" firstAttribute="bottom" secondItem="H2p-sc-9uM" secondAttribute="bottom" id="ukc-mf-rxc"/>
                 </constraints>
@@ -41,6 +41,8 @@
                 <outlet property="textView" destination="MKs-hM-6Kt" id="DUm-TU-NaA"/>
                 <outlet property="textViewBottom" destination="ukc-mf-rxc" id="7vn-5c-Xe4"/>
                 <outlet property="textViewHeight" destination="q0w-DR-U8n" id="U0h-Oz-psm"/>
+                <outlet property="textViewLeft" destination="cZv-PR-34W" id="Vhj-QE-hsc"/>
+                <outlet property="textViewRight" destination="SG4-kW-XBa" id="NTs-4J-III"/>
                 <outlet property="textViewTop" destination="dfM-Bf-pUx" id="RQv-Dj-U4b"/>
             </connections>
             <point key="canvasLocation" x="-6.1068702290076331" y="19.718309859154932"/>

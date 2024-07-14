@@ -23,6 +23,10 @@ class QueContentEssayCell: UITableViewCell {
     
     @IBOutlet weak var textViewBottom: NSLayoutConstraint!
     
+    @IBOutlet weak var textViewLeft: NSLayoutConstraint!
+    
+    @IBOutlet weak var textViewRight: NSLayoutConstraint!
+    
     var model: QueContentEssayModel! {
         didSet {
             textView.isSelectable = !model.isResult
@@ -30,6 +34,8 @@ class QueContentEssayCell: UITableViewCell {
             
             textViewTop.constant = model.contentInset.top
             textViewBottom.constant = model.contentInset.bottom
+            textViewLeft.constant = model.contentInset.left
+            textViewRight.constant = model.contentInset.right
             
             textView.text = model.getAnswer()
             if let estimatedHeight = model.estimatedHeight {

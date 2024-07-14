@@ -14,6 +14,8 @@ class QueContentSelectOptionCell: UITableViewCell {
             tableView.snp.updateConstraints { make in
                 make.top.equalToSuperview().inset(model.contentInset.top)
                 make.bottom.equalToSuperview().inset(model.contentInset.bottom)
+                make.left.equalToSuperview().inset(model.contentInset.left)
+                make.right.equalToSuperview().inset(model.contentInset.right)
             }
             tableView.reloadData()
         }
@@ -26,8 +28,8 @@ class QueContentSelectOptionCell: UITableViewCell {
         let tableView = UITableView(frame: .init(x: 16, y: 0, width: contentView.kwidth - 32, height: 100))
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.setEditing(true, animated: false)
         tableView.separatorStyle = .none
+        tableView.register(UITableViewCell.self)
         return tableView
     }()
     
@@ -36,7 +38,8 @@ class QueContentSelectOptionCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         contentView.addSubview(tableView)
         tableView.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(20)
+            make.left.equalToSuperview().inset(20)
+            make.right.equalToSuperview().inset(20)
             make.top.equalToSuperview().inset(0)
             make.bottom.equalToSuperview().inset(0)
             make.height.equalTo(100)
@@ -61,7 +64,11 @@ class QueContentSelectOptionCell: UITableViewCell {
 extension QueContentSelectOptionCell: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        model.options.count
+        if let model = model {
+            return model.options.count
+        } else {
+            return 0
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -77,11 +84,13 @@ extension QueContentSelectOptionCell: UITableViewDelegate, UITableViewDataSource
             cell.textLabel?.text = option
         }
         cell.backgroundColor = model.selectIndex == indexPath.row ? .blue : .white
+        cell.selectionStyle = .none
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         model.selectIndex = indexPath.row
+        tableView.reloadData()
     }
 }
 

@@ -13,7 +13,7 @@ class QueContentEssayModel: NSObject, QueContentModel {
         QueContentEssayCell.self
     }
     
-    var contentInset: UIEdgeInsets = .init(top: 10, left: 0, bottom: 0, right: 0)
+    var contentInset: UIEdgeInsets = .init(top: 10, left: 18, bottom: 0, right: 18)
     
     var estimatedHeight: CGFloat?
     

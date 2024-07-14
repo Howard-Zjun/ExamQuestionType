@@ -9,7 +9,7 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var queLevel1Arr: [QueLevel1] = [.closeModel, .readComprehensionModel, .essayFillBlankModel, .wordPracticeModel, .listenModel, .listenSpeakModel, .grammarPracticeModel, .essayModel]
+    var queLevel1Arr: [QueLevel1] = [.closeModel, .readComprehensionModel, .essayFillBlankModel, .wordPracticeModel, .grammarPracticeModel, .essayModel]
     
     lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .init(x: 0, y: 0, width: view.frame.width, height: view.frame.height), style: .plain)
@@ -35,6 +35,7 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: NSStringFromClass(UITableViewCell.self), for: indexPath)
         cell.textLabel?.text = queLevel1Arr[indexPath.row].name
+        cell.selectionStyle = .none
         return cell
     }
     

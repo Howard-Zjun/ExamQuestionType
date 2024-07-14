@@ -19,7 +19,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         QueContentFillBlankCell.self
     }
     
-    var contentInset: UIEdgeInsets = .zero
+    var contentInset: UIEdgeInsets = .init(top: 5, left: 18, bottom: 0, right: 18)
     
     var estimatedHeight: CGFloat?
 
@@ -59,12 +59,13 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
                 fillBlankAttrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor(hex: 0x2F81FB), range: .init(location: 0, length: fillBlankAttrArr[focunsIndex].length))
             }
             makeResultAttr()
+            delegate?.contentDidChange(model: self)
         }
     }
     
     let isResult: Bool
     
-    init?(queLevel2: QueLevel2, isResult: Bool = false) {
+    convenience init?(queLevel2: QueLevel2, isResult: Bool = false, inFillBlank: Int = 0) {
         let no = queLevel2.no ?? ""
         let content = queLevel2.content ?? ""
         let html = no + content
@@ -72,17 +73,22 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             return nil
         }
         
-        self.allAttrArr = []
-        self.fillBlankAttrArr = []
-        self.resultAttributed = .init()
-        self.queLevel2 = queLevel2
-        self.isResult = isResult
-        super.init()
+        self.init(queLevel2: queLevel2, isResult: isResult)
+        
+        var userAnswers: [String] = []
+        var correctAnswers: [String]?
+        if queLevel2.isNormal {
+            userAnswers = queLevel2.userAnswers
+            correctAnswers = queLevel2.correctAnswers
+        } else {
+            userAnswers = queLevel2.subLevel2?.map({ $0.userAnswers.first ?? "" }) ?? []
+            correctAnswers = queLevel2.subLevel2?.flatMap({ $0.correctAnswers ?? [] })
+        }
         
         if isResult {
-            resolverResult(html: html, userAnswers: queLevel2.userAnswers, correctAnswers: queLevel2.correctAnswers ?? [])
+            resolverResult(html: html, userAnswers: userAnswers, correctAnswers: correctAnswers ?? [])
         } else {
-            resolver(html: html, userAnswers: queLevel2.userAnswers)
+            resolver(html: html, userAnswers: userAnswers)
         }
         
         // 去掉末尾换行
@@ -96,9 +102,18 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         makeResultAttr()
     }
     
+    init(queLevel2: QueLevel2, isResult: Bool) {
+        self.allAttrArr = []
+        self.fillBlankAttrArr = []
+        self.resultAttributed = .init()
+        self.queLevel2 = queLevel2
+        self.isResult = isResult
+    }
+    
     func setAnswer(text: String) {
         updateAttributed(text: text)
         updateStoreData(text: text)
+        delegate?.contentDidChange(model: self)
     }
     
     func getAnswer(index: Int) -> String? {
@@ -151,13 +166,13 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             return
         }
         if queLevel2.isNormal {
-            while queLevel2.userAnswers.count < index {
+            while queLevel2.userAnswers.count <= index {
                 queLevel2.userAnswers.append("")
             }
             queLevel2.userAnswers[index] = text
         } else {
             if let qst = queLevel2.subLevel2?[index] {
-                while qst.userAnswers.count < 1 {
+                while qst.userAnswers.count <= 0 {
                     qst.userAnswers.append("")
                 }
                 qst.userAnswers[0] = text
