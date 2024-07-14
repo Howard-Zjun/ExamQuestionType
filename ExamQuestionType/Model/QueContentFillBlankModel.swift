@@ -66,7 +66,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     let isResult: Bool
     
     convenience init?(queLevel2: QueLevel2, isResult: Bool = false, inFillBlank: Int = 0) {
-        let no = queLevel2.no ?? ""
+        let no = Tool.noHandle(no: queLevel2.no)
         let content = queLevel2.content ?? ""
         let html = no + content
         guard queLevel2.type == .FillBlank && !html.isEmpty else {

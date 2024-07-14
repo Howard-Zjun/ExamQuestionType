@@ -17,7 +17,7 @@ class QueContentSelectFillBlankModel: QueContentFillBlankModel {
     let options: [[String]]
     
     init?(queLevel2: QueLevel2, isResult: Bool = false, inSelectFillBlank: Int = 0) {
-        let no = queLevel2.no ?? ""
+        let no = Tool.noHandle(no: queLevel2.no)
         let content = queLevel2.content ?? ""
         let html = no + content
         guard queLevel2.type == .SelectFillBlank, !html.isEmpty else {

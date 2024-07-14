@@ -13,7 +13,7 @@ class QueContentTableModel: NSObject, QueContentModel {
         QueContentTableCell.self
     }
     
-    var contentInset: UIEdgeInsets = .init(top: 18, left: 0, bottom: 18, right: 0)
+    var contentInset: UIEdgeInsets = .init(top: 0, left: 18, bottom: 0, right: 18)
     
     var estimatedHeight: CGFloat?
 

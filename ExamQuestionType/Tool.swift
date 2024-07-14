@@ -29,4 +29,11 @@ class Tool: NSObject {
         let aStr: NSString = "A"
         return Int((letter as NSString).character(at: 0) - aStr.character(at: 0))
     }
+    
+    static func noHandle(no: String?) -> String {
+        if let no = no {
+            return no + "、"
+        }
+        return ""
+    }
 }

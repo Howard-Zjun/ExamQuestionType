@@ -81,9 +81,9 @@ extension QueLevel1 {
     
     static var grammarPracticeModel: QueLevel1 {
         .init(name: "语法专练", descri: "请从A、B、C、D四个选项中选择正确的答案。", queLevel2Arr: [
-            .init(videoUrl: nil, voiceUrl: nil, subLevel2: nil, content: "<p>Celeste Ng\'s latest book, ___ plot is quite new and original, has received a lot of attention.<blk mlen=\"3\"   ></blk></p>", correctAnswers: ["C"], options: ["which", "where", "whose", "that"], type: .Select, no: "1", isNormal: true),
-            .init(videoUrl: nil, voiceUrl: nil, subLevel2: nil, content: "<p>___ is known to everybody, the moon travels around the earth once every month.<blk     mlen=\"3\" mstyle></blk></p>", correctAnswers: ["C"], options: ["Which", "That", "As", "What"], type: .Select, no: "2", isNormal: true),
-            .init(videoUrl: nil, voiceUrl: nil, subLevel2: nil, content: "<p>I walk through the doors into the waiting area, ___ there\'s a familiar atmosphere of boredom and tension.<blk  mlen=\"3\" mstyle></blk></p>", correctAnswers: ["D"], options: ["which", "that", "whose", "where"], type: .Select, no: "3", isNormal: true)
+            .init(videoUrl: nil, voiceUrl: nil, subLevel2: nil, content: "<p>Celeste Ng\'s latest book, ___ plot is quite new and original, has received a lot of attention.</p>", correctAnswers: ["C"], options: ["which", "where", "whose", "that"], type: .Select, no: "1", isNormal: true),
+            .init(videoUrl: nil, voiceUrl: nil, subLevel2: nil, content: "<p>___ is known to everybody, the moon travels around the earth once every month.</p>", correctAnswers: ["C"], options: ["Which", "That", "As", "What"], type: .Select, no: "2", isNormal: true),
+            .init(videoUrl: nil, voiceUrl: nil, subLevel2: nil, content: "<p>I walk through the doors into the waiting area, ___ there\'s a familiar atmosphere of boredom and tension.</p>", correctAnswers: ["D"], options: ["which", "that", "whose", "where"], type: .Select, no: "3", isNormal: true)
         ])
     }
     

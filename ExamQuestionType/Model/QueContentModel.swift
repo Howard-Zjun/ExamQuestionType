@@ -61,7 +61,7 @@ class QueContentResolver {
     }
     
     static func normalResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
-        let no = queLevel2.no ?? ""
+        let no = Tool.noHandle(no: queLevel2.no)
         let content = queLevel2.content ?? ""
         let html = no + content
         guard !html.isEmpty else {
@@ -139,7 +139,7 @@ class QueContentResolver {
 
     
     static func essayResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
-        let no = queLevel2.no ?? ""
+        let no = Tool.noHandle(no: queLevel2.no)
         let content = queLevel2.content ?? ""
         let html = no + content
         guard !html.isEmpty else {
