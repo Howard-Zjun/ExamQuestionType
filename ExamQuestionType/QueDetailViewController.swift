@@ -217,6 +217,16 @@ class QueDetailViewController: UIViewController {
                 fillBlankModel.focunsIndex = nil
                 let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentFillBlankCell
                 cell?.textView.resignFirstResponder()
+            } else if let tableFillBlankModel = model as? QueContentTableModel {
+                let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentTableCell
+
+                for (trIndex, trModel) in tableFillBlankModel.tableModel.expansionTrModelArr.enumerated() {
+                    trModel.focunsIndex = nil
+                    
+                    let trCell = cell?.collectionView.cellForItem(at: .init(item: trIndex, section: 0)) as? QueContentTableCell.QCTCell
+                    trCell?.textField.resignFirstResponder()
+                    trCell?.tdModel = trModel
+                }
             }
         }
     }

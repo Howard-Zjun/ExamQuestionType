@@ -63,11 +63,11 @@ extension QueLevel1 {
         ])
     }
     
-//    static var scenarioModel: QueLevel1 {
-//        .init(name: "情景对话", descri: "根据场景填空", queLevel2Arr: [
-//            .init(videoUrl: nil, voiceUrl: nil, subLevel2: nil, content: "", correctAnswers: <#T##[String]?#>, options: <#T##[String]?#>, type: <#T##QueLevel2.QueLevel2Type#>, no: <#T##String?#>, isNormal: <#T##Bool#>)
-//        ])
-//    }
+    static var scenarioModel: QueLevel1 {
+        .init(name: "情景对话", descri: "根据场景填空", queLevel2Arr: [
+            .init(videoUrl: nil, voiceUrl: nil, subLevel2: nil, content: "<table border=\"1\"><tbody><tr><td rowspan=\"6\" width=\"62\"><p>Kate</p></td><td width=\"252\"><p>How old is she?</p></td><td width=\"239\"><p>12.</p></td></tr><tr><td width=\"252\"><p>What is her favorite sport?</p></td><td width=\"239\"><p>Swimming.</p></td></tr><tr><td width=\"252\"><p><blk></blk> <blk></blk> has she been doing the sport?</p></td><td width=\"239\"><p>6 years.</p></td></tr><tr><td width=\"252\"><p>Why does she like it?</p></td><td width=\"239\"><p>Because her <blk></blk> <blk></blk> is Zhang Yufei.</p></td></tr><tr><td width=\"252\"><p>What\'s her goal?</p></td><td width=\"239\"><p>To be a <blk></blk> swimmer.</p></td></tr><tr><td width=\"252\"><p>What will she do in the future?</p></td><td width=\"239\"><p>Try <blk></blk> and <blk></blk>.</p></td></tr></tbody></table>", correctAnswers: nil, options: nil, type: .FillBlank, no: nil, isNormal: true)
+        ])
+    }
     
     static var wordPracticeModel: QueLevel1 {
         .init(name: "词汇专练", descri: "根据英文释义填写对应的单词。", queLevel2Arr: [

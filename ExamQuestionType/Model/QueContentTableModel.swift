@@ -299,6 +299,20 @@ class EQTableTdModel: NSObject {
     let queLevel2: QueLevel2
     // 填空偏移
     let fillBlankIndexOffset: Int
+    
+    var allAttrArr: [NSMutableAttributedString]
+    
+    var fillBlankAttrArr: [NSMutableAttributedString]
+    
+    var resultAttributed: NSMutableAttributedString
+    
+    lazy var paragraphStyle: NSParagraphStyle = {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 5
+        paragraphStyle.paragraphSpacing = 5
+        return paragraphStyle
+    }()
+    
     // 该整体的哪一个填空
     var focunsIndex: Int? {
         didSet {
@@ -321,19 +335,6 @@ class EQTableTdModel: NSObject {
             makeResultAttr()
         }
     }
-    
-    var allAttrArr: [NSMutableAttributedString]
-    
-    var fillBlankAttrArr: [NSMutableAttributedString]
-    
-    var resultAttributed: NSMutableAttributedString
-    
-    lazy var paragraphStyle: NSParagraphStyle = {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 5
-        paragraphStyle.paragraphSpacing = 5
-        return paragraphStyle
-    }()
     
     init?(element: TFHppleElement, queLevel2: QueLevel2, fillBlankIndex: inout Int, isResult: Bool) {
         if element.tagName != "td" {
@@ -439,7 +440,7 @@ class EQTableTdModel: NSObject {
             newFillBlank = .emptyFillBlankAttrStr(index: index, paragraphStyle: paragraphStyle, needEmptyPlacehold: false)
             newFillBlank.addAttribute(.underlineColor, value: UIColor(hex: 0x2F81FB), range: .init(location: 0, length: newFillBlank.length))
         } else {
-            newFillBlank = text.fillBlankAttr(font: .systemFont(ofSize: 18), link: "\(snFillBlankURLPrefix)\(snSeparate)\(index)", paragraphStyle: paragraphStyle, isFocus: true)
+            newFillBlank = text.fillBlankAttr(font: .systemFont(ofSize: configModel.fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(index)", paragraphStyle: paragraphStyle, isFocus: true)
         }
         
         let oldFillBlank = fillBlankAttrArr[index]
@@ -456,13 +457,13 @@ class EQTableTdModel: NSObject {
             return
         }
         if queLevel2.isNormal {
-            while queLevel2.userAnswers.count < index {
+            while queLevel2.userAnswers.count <= fillBlankIndexOffset + index {
                 queLevel2.userAnswers.append("")
             }
-            queLevel2.userAnswers[index] = text
+            queLevel2.userAnswers[fillBlankIndexOffset + index] = text
         } else {
-            if let qst = queLevel2.subLevel2?[index] {
-                while qst.userAnswers.count < 1 {
+            if let qst = queLevel2.subLevel2?[fillBlankIndexOffset + index] {
+                while qst.userAnswers.count <= 0  {
                     qst.userAnswers.append("")
                 }
                 qst.userAnswers[0] = text

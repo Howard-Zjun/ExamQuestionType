@@ -124,29 +124,6 @@ extension QueContentTableCell: TableCollectionViewFlowLayoutDeleagte {
     func model(indexPath: IndexPath) -> EQTableTdModel {
         model.tableModel.expansionTrModelArr[indexPath.item]
     }
-    
-    /// 旧单元大小计算方式
-    func itemFrame(indexPath: IndexPath) -> CGRect {
-        let contentWidth = collectionView.frame.width
-        let contentHeight = collectionView.frame.height
-        
-        let col = model.tableModel.maxColCount
-        let row = model.tableModel.rowCount
-        
-        let colSpan = floor(contentWidth / CGFloat(col))
-        let rowSpan = floor(contentHeight / CGFloat(row))
-        
-        let model = model(indexPath: indexPath)
-        let x = CGFloat(model.xNum) * colSpan
-        let y = CGFloat(model.yNum) * rowSpan
-        let height = CGFloat(model.heightNum) * rowSpan
-        
-        if model.isLast { // 由于 floor 取小值，所以一行单元可能占不满，所以特殊处理
-            return CGRect(x: x, y: y, width: contentWidth - x, height: height)
-        } else {
-            return CGRect(x: x, y: y, width: CGFloat(model.widthNum) * colSpan, height: height)
-        }
-    }
 }
 
 extension QueContentTableCell {
@@ -213,7 +190,6 @@ extension QueContentTableCell {
         
         // MARK: - UITextViewDelegate
         func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
-            print("\(NSStringFromClass(Self.self)) \(#function) url: \(URL.absoluteString)")
             if URL.absoluteString.hasPrefix(snFillBlankURLPrefix) {
                 if let str = URL.absoluteString.components(separatedBy: snSeparate).last, let index = Int(str) {
                     
@@ -251,8 +227,6 @@ extension QueContentTableCell {
 protocol TableCollectionViewFlowLayoutDeleagte {
     
     func model(indexPath: IndexPath) -> EQTableTdModel
-    
-    func itemFrame(indexPath: IndexPath) -> CGRect
 }
 
 // MARK: - TableCollectionViewFlowLayout

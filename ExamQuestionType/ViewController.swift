@@ -9,7 +9,7 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var queLevel1Arr: [QueLevel1] = [.closeModel, .readComprehensionModel, .essayFillBlankModel, .wordPracticeModel, .grammarPracticeModel, .essayModel]
+    var queLevel1Arr: [QueLevel1] = [.closeModel, .readComprehensionModel, .essayFillBlankModel, .scenarioModel, .wordPracticeModel, .grammarPracticeModel, .essayModel]
     
     lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .init(x: 0, y: 0, width: view.frame.width, height: view.frame.height), style: .plain)
