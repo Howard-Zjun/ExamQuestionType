@@ -158,14 +158,14 @@ class EQTableModel: NSObject {
         // 计算最大行数
         var rowCount = 0
         if let theadModel = theadModel {
-            for (trIndex, trModel) in theadModel.trModelArr.enumerated() {
+            for trModel in theadModel.trModelArr {
                 rowCount += 1
-                for (tdIndex, tdModel) in trModel.tdModelArr.enumerated() {
+                for tdModel in trModel.tdModelArr {
                     tdModel.configModel = .headConfig
                 }
             }
         }
-        for trModel in trModelArr {
+        for _ in trModelArr {
             rowCount += 1
         }
         print("\(NSStringFromClass(Self.self)) \(#function) 最大行数: \(rowCount)")
@@ -180,7 +180,7 @@ class EQTableModel: NSObject {
         for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModelArr).enumerated() {
             
             // 处理每行里的跨列，填充跨行后，行的宽度
-            for (tdIndex, tdModel) in trModel.tdModelArr.enumerated() {
+            for tdModel in trModel.tdModelArr {
                 for i in 0..<tdModel.heightNum {
                     maxColArr[trIndex + i] += tdModel.widthNum
                 }

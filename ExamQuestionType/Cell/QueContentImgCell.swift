@@ -23,7 +23,6 @@ class QueContentImgCell: UITableViewCell {
                 imgView.sd_setImage(with: model.imageModel.src)
                 imgFit(width: width, height: height)
             } else {
-                let tempModel = model
                 imgView.sd_setImage(with: model.imageModel.src) { [weak self] img, _, _, _ in
                     guard let self = self else { return }
                     if let img = img {

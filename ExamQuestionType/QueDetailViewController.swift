@@ -32,6 +32,8 @@ class QueDetailViewController: UIViewController {
                     selectFillBlankModel.delegate = self
                 } else if let fillBlankModel = model as? QueContentFillBlankModel {
                     fillBlankModel.delegate = self
+                } else if let tableModel = model as? QueContentTableModel {
+                    tableModel.delegate = self
                 }
             }
             
@@ -366,6 +368,24 @@ extension QueDetailViewController: QueContentModelDelegate {
             } else if let obj1 = model as? QueContentSelectFillBlankModel, let obj2 = contentModel as? QueContentSelectFillBlankModel, obj1 == obj2 {
                 let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentSelectFillBlankCell
                 cell?.model = obj2
+            } else if let obj1 = model as? QueContentTableModel, let obj2 = contentModel as? QueContentTableModel, obj1 == obj2 {
+                obj2.tableModel.adjustSize(contentWidth: kScreenWidth - obj2.contentInset.left - obj2.contentInset.right)
+                
+                let tableCell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentTableCell
+                
+                for (tdIndex, tdModel) in obj2.tableModel.expansionTrModelArr.enumerated() {
+                    let tdCell = tableCell?.collectionView.cellForItem(at: .init(item: tdIndex, section: 0)) as? QueContentTableCell.QCTCell
+                    tdCell?.tdModel = tdModel
+                }
+                tableCell?.collectionView.snp.updateConstraints({ make in
+                    if let last = obj2.tableModel.expansionTrModelArr.last {
+                        make.height.equalTo(ceil(last.y + last.height))
+                    } else {
+                        make.height.equalTo(obj2.tableModel.rowCount * 55)
+                    }
+                })
+                tableView.beginUpdates()
+                tableView.endUpdates()
             }
         }
     }
