@@ -39,7 +39,7 @@ class QueContentSelectFillBlankCell: UITableViewCell {
     }
     
     // MARK: - view
-    @IBOutlet weak var textView: UITextView! {
+    @IBOutlet weak var textView: DisRangeAbleTextView! {
         didSet {
             textView.font = .systemFont(ofSize: 18)
             textView.delegate = self

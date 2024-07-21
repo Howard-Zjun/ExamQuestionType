@@ -19,32 +19,7 @@ class QueDetailViewController: UIViewController {
     
     var queLevel2: QueLevel2! {
         didSet {
-            var queue: [QueLevel2] = [queLevel2]
-            var models: [QueContentModel] = []
-            var index = 0
-            while index < queue.count {
-                let temp = queue[index]
-                
-                if temp.type == .FillBlank {
-                    models += QueContentResolver.fillBlankResolver(queLevel2: temp, isResult: false)
-                } else if temp.type == .SelectFillBlank {
-                    models += QueContentResolver.selectFillBlankResolver(queLevel2: temp, isResult: false)
-                } else if temp.type == .Essay {
-                    models += QueContentResolver.essayResolver(queLevel2: temp, isResult: false)
-                } else if temp.type == .Select {
-                    models += QueContentResolver.selectResolver(queLevel2: temp, isResult: false)
-                } else {
-                    models += QueContentResolver.normalResolver(queLevel2: temp, isResult: false)
-                }
-                
-                if !temp.isNormal, let subLevel2 = temp.subLevel2 {
-                    queue += subLevel2
-                }
-                
-                index += 1
-            }
-            
-            self.models = models
+            self.models = queLevel2.resolver(isResult: false)
         }
     }
     
@@ -63,6 +38,8 @@ class QueDetailViewController: UIViewController {
             tableView.reloadData()
         }
     }
+    
+    var tapGesture: UITapGestureRecognizer?
     
     // MARK: - view
     lazy var tableView: UITableView = {
@@ -171,6 +148,7 @@ class QueDetailViewController: UIViewController {
         
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow(_:)), name: UIResponder.keyboardDidShowNotification, object: nil)
     }
     
     func config(queLevel1: QueLevel1) {
@@ -208,6 +186,27 @@ class QueDetailViewController: UIViewController {
         }
     }
     
+    @objc func keyboardDidShow(_ info: Notification) {
+        if let tapGesture = tapGesture {
+            tableView.removeGestureRecognizer(tapGesture)
+        }
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(resignResponder(_:)))
+        tapGesture.delegate = self
+        tableView.addGestureRecognizer(tapGesture)
+        self.tapGesture = tapGesture
+        
+        // 在 keyboardWillShow 里加没效果，需要等tableView高度变化稳定后才能加滚动
+        // 滚动选中的内容到中心，尽量不被键盘遮挡
+        for (index, model) in models.enumerated() {
+            if let enterModel = model as? QueContentEssayModel {
+                if enterModel.isFocuns {
+                    tableView.scrollToRow(at: .init(row: index, section: 0), at: .top, animated: true)
+                    break
+                }
+            }
+        }
+    }
+    
     @objc func keyboardWillHide(_ info: Notification) {
         optionCollectionView.snp.updateConstraints { make in
             make.height.equalTo(0)
@@ -227,8 +226,19 @@ class QueDetailViewController: UIViewController {
                     trCell?.textField.resignFirstResponder()
                     trCell?.tdModel = trModel
                 }
+            } else if let enterModel = model as? QueContentEssayModel {
+                enterModel.isFocuns = false
             }
         }
+        
+        if let tapGesture = tapGesture {
+            tableView.removeGestureRecognizer(tapGesture)
+            self.tapGesture = nil
+        }
+    }
+    
+    @objc func resignResponder(_ sender: UITapGestureRecognizer) {
+        view.endEditing(true)
     }
 }
 
@@ -259,12 +269,22 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
             return cell
         } else if let essayModel = model as? QueContentEssayModel {
             let cell = tableView.dequeueReusableCell(QueContentEssayCell.self, indexPath: indexPath)
+            cell.indexPath = indexPath
             cell.model = essayModel
-            cell.contentSizeWillChange = {
-                tableView.beginUpdates()
+            cell.contentSizeDidChange = { [weak self] in
+                self?.tableView.beginUpdates()
+                self?.tableView.endUpdates()
             }
-            cell.contentSizeDidChange = {
-                tableView.endUpdates()
+            cell.actionDidChange = { [weak self] tempIndexPath in
+                guard let self = self else { return }
+                for (tempIndex, model) in models.enumerated() {
+                    if let enterModel = model as? QueContentEssayModel {
+                        enterModel.isFocuns = tempIndex == tempIndexPath.row
+                    }
+                }
+            }
+            cell.textDidChange = { text in
+                essayModel.setAnswer(text: text)
             }
             cell.selectionStyle = .none
             return cell
@@ -298,6 +318,10 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
         } else if let imgModel = model as? QueContentImgModel {
             let cell = tableView.dequeueReusableCell(QueContentImgCell.self, indexPath: indexPath)
             cell.model = imgModel
+            cell.contentSizeDidChange = { [weak self] in
+                self?.tableView.beginUpdates()
+                self?.tableView.endUpdates()
+            }
             cell.selectionStyle = .none
             return cell
         } else if let tableModel = model as? QueContentTableModel {
@@ -459,5 +483,13 @@ extension QueDetailViewController: UICollectionViewDelegateFlowLayout, UICollect
                 }
             }
         }
+    }
+}
+
+// MARK: - UIGestureRecognizerDelegate
+extension QueDetailViewController: UIGestureRecognizerDelegate {
+    
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        true
     }
 }

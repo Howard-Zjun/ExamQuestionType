@@ -19,6 +19,17 @@ class QueContentTableModel: NSObject, QueContentModel {
 
     let tableModel: EQTableModel
     
+    weak var delegate: QueContentModelDelegate? {
+        didSet {
+            for trModel in tableModel.expansionTrModelArr {
+                trModel.updateBlock = { [weak self] in
+                    guard let self = self else { return }
+                    delegate?.contentDidChange(model: self)
+                }
+            }
+        }
+    }
+    
     init?(queLevel2: QueLevel2, html: String, isResult: Bool = false) {
         guard let tableModel = EQTableModel(html: html, queLevel2: queLevel2, isResult: isResult) else {
             return nil
@@ -91,26 +102,9 @@ class EQTableModel: NSObject {
         
         super.init()
 
-        var maxColCount = 0 // 最大列数
-        var rowCount = 0
-        if let theadModel = theadModel {
-            for (trIndex, trModel) in theadModel.trModelArr.enumerated() {
-                maxColCount = max(maxColCount, trModel.tdModelArr.count)
-                rowCount += 1
-                for (tdIndex, tdModel) in trModel.tdModelArr.enumerated() {
-                    tdModel.yNum = trIndex
-                    tdModel.xNum = tdIndex
-                    tdModel.configModel = .headConfig
-                }
-            }
-        }
-        for trModel in trModelArr {
-            maxColCount = max(maxColCount, trModel.tdModelArr.count)
-            rowCount += 1
-        }
+        calMaxRowCount()
         
-        self.maxColCount = maxColCount
-        self.rowCount = rowCount
+        calMaxColCount()
         
         // 将单元所在位置修正，下面是数据都正确的处理逻辑，没有应对异常的处理
         
@@ -160,6 +154,45 @@ class EQTableModel: NSObject {
         }
     }
     
+    func calMaxRowCount() {
+        // 计算最大行数
+        var rowCount = 0
+        if let theadModel = theadModel {
+            for (trIndex, trModel) in theadModel.trModelArr.enumerated() {
+                rowCount += 1
+                for (tdIndex, tdModel) in trModel.tdModelArr.enumerated() {
+                    tdModel.configModel = .headConfig
+                }
+            }
+        }
+        for trModel in trModelArr {
+            rowCount += 1
+        }
+        print("\(NSStringFromClass(Self.self)) \(#function) 最大行数: \(rowCount)")
+        self.rowCount = rowCount
+    }
+    
+    func calMaxColCount() {
+        // 最大列数
+        var maxColCount = 0
+        // 计算每一行的最多列
+        var maxColArr: [Int] = .init(repeating: 0, count: rowCount)
+        for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModelArr).enumerated() {
+            
+            // 处理每行里的跨列，填充跨行后，行的宽度
+            for (tdIndex, tdModel) in trModel.tdModelArr.enumerated() {
+                for i in 0..<tdModel.heightNum {
+                    maxColArr[trIndex + i] += tdModel.widthNum
+                }
+            }
+            
+            maxColCount = max(maxColCount, maxColArr[trIndex])
+        }
+        
+        print("\(NSStringFromClass(Self.self)) \(#function) 最大列数: \(maxColCount)")
+        self.maxColCount = maxColCount
+    }
+    
     /// 单元大小适应
     func adjustSize(contentWidth: CGFloat) {
         var arr: [[EQTableTdModel]] = .init(repeating: [], count: rowCount)
@@ -185,7 +218,7 @@ class EQTableModel: NSObject {
                 maxContentHeight = max(maxContentHeight, tdModel.resultAttributed.textHeight(textWidth: tdModel.width) + 20)
             }
             
-            maxY += maxContentHeight
+            maxY += maxContentHeight + 20
             for tdModel in arr[trIndex] {
                 tdModel.height = maxY - tdModel.y
             }
@@ -245,22 +278,26 @@ class EQTableTrModel: NSObject {
 
 class EQTableConfig: NSObject {
     
-    var fontSize: CGFloat
+    let fontSize: CGFloat
     
-    var backgroundColor: UIColor
+    let backgroundColor: UIColor
     
-    var boardColor: UIColor
+    let boardColor: UIColor
     
-    var boardWidth: CGFloat
+    let boardWidth: CGFloat
+    
+    let baselineOffset: Int
     
     init(fontSize: CGFloat = 14,
          backgroundColor: UIColor = .white,
          boardColor: UIColor = .black,
-         boardWidth: CGFloat = 0.5) {
+         boardWidth: CGFloat = 0.5,
+         baselineOffset: Int = 5) {
         self.fontSize = fontSize
         self.backgroundColor = backgroundColor
         self.boardColor = boardColor
         self.boardWidth = boardWidth
+        self.baselineOffset = baselineOffset
     }
     
     static let contentModel: EQTableConfig = .init()
@@ -318,7 +355,7 @@ class EQTableTdModel: NSObject {
         didSet {
             if let focunsIndex = oldValue, focunsIndex < fillBlankAttrArr.count {
                 if getAnswer(index: fillBlankIndexOffset + focunsIndex) == nil {
-                    let newFillBlankStr = NSMutableAttributedString.emptyFillBlankAttrStr(index: focunsIndex)
+                    let newFillBlankStr = NSMutableAttributedString.emptyFillBlankAttrWithIcon(index: fillBlankIndexOffset + focunsIndex, baselineOffset: configModel.baselineOffset)
                     let oldFillBlankStr = fillBlankAttrArr[focunsIndex]
                     let itemInAllIndex = (allAttrArr as NSArray).index(of: oldFillBlankStr)
                     fillBlankAttrArr[focunsIndex] = newFillBlankStr
@@ -335,6 +372,8 @@ class EQTableTdModel: NSObject {
             makeResultAttr()
         }
     }
+    
+    var updateBlock: (() -> Void)?
     
     init?(element: TFHppleElement, queLevel2: QueLevel2, fillBlankIndex: inout Int, isResult: Bool) {
         if element.tagName != "td" {
@@ -370,14 +409,17 @@ class EQTableTdModel: NSObject {
         super.init()
         
         let firstEnd = (element.raw as NSString).range(of: ">").location + 1
-        let html = (element.raw as NSString).substring(with: .init(location: firstEnd, length: element.raw.count - firstEnd - 5))
+        let html: String
+        if firstEnd >= element.raw.count { // 为 <td/> 标签
+            html = ""
+        } else {
+            html = (element.raw as NSString).substring(with: .init(location: firstEnd, length: element.raw.count - firstEnd - 5))
+        }
         var userAnswers: [String] = []
         if queLevel2.isNormal {
             userAnswers = queLevel2.userAnswers
         } else {
-            for item in queLevel2.subLevel2 ?? [] {
-                userAnswers.append(item.userAnswers.first ?? "")
-            }
+            userAnswers = queLevel2.subLevel2?.map({ $0.userAnswers.first ?? "" }) ?? []
         }
         if isResult {
             var correctAnswers: [String]?
@@ -437,10 +479,10 @@ class EQTableTdModel: NSObject {
         var text = text
         if text.isEmpty { // 若是没有内容则变为空的内容
             text = spaceStr
-            newFillBlank = .emptyFillBlankAttrStr(index: index, paragraphStyle: paragraphStyle, needEmptyPlacehold: false)
+            newFillBlank = .emptyFillBlankAttr(index: index, baselineOffset: configModel.baselineOffset)
             newFillBlank.addAttribute(.underlineColor, value: UIColor(hex: 0x2F81FB), range: .init(location: 0, length: newFillBlank.length))
         } else {
-            newFillBlank = text.fillBlankAttr(font: .systemFont(ofSize: configModel.fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(index)", paragraphStyle: paragraphStyle, isFocus: true)
+            newFillBlank = text.fillBlankAttr(font: .systemFont(ofSize: configModel.fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(index)", underlineColor: .init(hex: 0x2F81FB), baselineOffset: configModel.baselineOffset)
         }
         
         let oldFillBlank = fillBlankAttrArr[index]
@@ -476,7 +518,7 @@ class EQTableTdModel: NSObject {
         for itemAttrStr in allAttrArr {
             resultAttributed.append(itemAttrStr)
         }
-        resultAttributed.addAttribute(.baselineOffset, value: NSNumber(value: 5), range: .init(location: 0, length: resultAttributed.length))
+//        resultAttributed.addAttribute(.baselineOffset, value: NSNumber(value: 5), range: .init(location: 0, length: resultAttributed.length))
         resultAttributed.addAttribute(.paragraphStyle, value: paragraphStyle, range: .init(location: 0, length: resultAttributed.length))
         self.resultAttributed = resultAttributed
     }
@@ -493,7 +535,7 @@ class EQTableTdModel: NSObject {
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
             
-                allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag, .br, .aTag, .strongTag] ,fontSize: configModel.fontSize, paragraphStyle: paragraphStyle))
+                allAttrArr.append(noHandleStr.handle(fontSize: configModel.fontSize, baselineOffset: configModel.baselineOffset))
             }
             let tempStr = (html as NSString).substring(with: range)
             if tempStr.hasPrefix("<p") {
@@ -502,12 +544,13 @@ class EQTableTdModel: NSObject {
                 resolver(html: content, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers)
                 allAttrArr.append(.init(string: "\n", attributes: [
                     .font : UIFont.systemFont(ofSize: configModel.fontSize),
-                    .paragraphStyle : paragraphStyle,
                 ]))
             } else if tempStr.hasPrefix("<blk") {
                 resolverBLK(fillBlankIndex: fillBlankIndex, userAnswers: userAnswers)
                 
                 fillBlankIndex += 1
+            } else if tempStr.hasPrefix("<img") {
+                resolverIMG(content: tempStr)
             }
             
             lastIndex = range.location + range.length
@@ -516,7 +559,7 @@ class EQTableTdModel: NSObject {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag, .br, .aTag, .strongTag] ,fontSize: configModel.fontSize, paragraphStyle: paragraphStyle))
+            allAttrArr.append(noHandleStr.handle(fontSize: configModel.fontSize, baselineOffset: configModel.baselineOffset))
         }
     }
     
@@ -530,12 +573,46 @@ class EQTableTdModel: NSObject {
         
         let fillBlankAttrStr: NSMutableAttributedString!
         if haveAnswer {
-            fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: configModel.fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", paragraphStyle: paragraphStyle)
+            fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: configModel.fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", baselineOffset: configModel.baselineOffset)
         } else {
-            fillBlankAttrStr = .emptyFillBlankAttrStr(index: fillBlankIndex, paragraphStyle: paragraphStyle)
+            fillBlankAttrStr = .emptyFillBlankAttrWithIcon(index: fillBlankIndex, baselineOffset: configModel.baselineOffset)
         }
         fillBlankAttrArr.append(fillBlankAttrStr)
         allAttrArr.append(fillBlankAttrStr)
+    }
+    
+    func resolverIMG(content: String) {
+        if let imgModels = QueContentImgModel.ImgModel.load(html: content) {
+            for imgModel in imgModels {
+                
+                allAttrArr.append(.init(string: "\n", attributes: [
+                    .font : UIFont.systemFont(ofSize: configModel.fontSize),
+                ]))
+                
+                allAttrArr.append(.init()) // 占位
+                let index = allAttrArr.count - 1
+                
+                SDWebImageManager.shared.loadImage(with: imgModel.src, progress: nil) { [weak self] img, data, _, _, _, url in
+                    print("\(NSStringFromClass(Self.self)) \(#function) 线程: \(Thread.current) 图片链接: \(String(describing: url)) 替换下标: \(index)")
+                    guard let self = self, let img = img else { return }
+                    let attachment = NSTextAttachment(image: img)
+                    var width = imgModel.width ?? img.size.width
+                    var height = imgModel.height ?? img.size.height
+                    if width > kScreenWidth - 40 {
+                        height = (kScreenWidth - 40) / width * height
+                        width = kScreenWidth - 40
+                    }
+                    attachment.bounds = .init(x: 0, y: 0, width: width, height: height)
+                    
+                    let imgAttr = NSMutableAttributedString(attachment: attachment)
+                    
+                    allAttrArr[index] = imgAttr
+                    makeResultAttr()
+                    
+                    updateBlock?()
+                }
+            }
+        }
     }
     
     func resolverResult(html: String, fillBlankIndex: inout Int, userAnswers: [String], correctAnswers: [String]) {
@@ -549,7 +626,7 @@ class EQTableTdModel: NSObject {
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
             
-                allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag, .br, .aTag, .strongTag] ,fontSize: configModel.fontSize, paragraphStyle: paragraphStyle))
+                allAttrArr.append(noHandleStr.handle(fontSize: configModel.fontSize, baselineOffset: configModel.baselineOffset))
             }
             let tempStr = (html as NSString).substring(with: range)
             if tempStr.hasPrefix("<p") {
@@ -558,12 +635,13 @@ class EQTableTdModel: NSObject {
                 resolverResult(html: content, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers)
                 allAttrArr.append(.init(string: "\n", attributes: [
                     .font : UIFont.systemFont(ofSize: configModel.fontSize),
-                    .paragraphStyle : paragraphStyle,
                 ]))
             } else if tempStr.hasPrefix("<blk") {
                 resolverResultBLK(fillBlankIndex: fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers)
                 
                 fillBlankIndex += 1
+            } else if tempStr.hasPrefix("<img") {
+                resolverIMG(content: tempStr)
             }
             
             lastIndex = range.location + range.length
@@ -572,7 +650,7 @@ class EQTableTdModel: NSObject {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag, .br, .aTag, .strongTag] ,fontSize: configModel.fontSize, paragraphStyle: paragraphStyle))
+            allAttrArr.append(noHandleStr.handle(fontSize: configModel.fontSize, baselineOffset: configModel.baselineOffset))
         }
     }
     
@@ -586,9 +664,9 @@ class EQTableTdModel: NSObject {
         
         let fillBlankAttrStr: NSMutableAttributedString!
         if haveAnswer {
-            fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: configModel.fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", paragraphStyle: paragraphStyle)
+            fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: configModel.fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", baselineOffset: configModel.baselineOffset)
         } else {
-            fillBlankAttrStr = .emptyFillBlankAttrStr(index: fillBlankIndex, paragraphStyle: paragraphStyle, needEmptyPlacehold: false)
+            fillBlankAttrStr = .emptyFillBlankAttr(index: fillBlankIndex, baselineOffset: configModel.baselineOffset)
         }
         
         var imgStr = "wrong_img"

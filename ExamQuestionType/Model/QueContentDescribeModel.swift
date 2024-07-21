@@ -64,10 +64,10 @@ class QueContentDescribeModel: NSObject, QueContentModel {
                     }
                 }
             }
-            handleContentAttr.handle(type: [.uTag, .iTag, .bTag, .blk, .br, .aTag, .strongTag], fontSize: fontSize, baselineOffset: baselineOffset)
+            handleContentAttr.handle(fontSize: fontSize, baselineOffset: baselineOffset)
             self.init(attr: handleContentAttr)
         } else {
-            let attr = html.handle(type: [.uTag, .iTag, .bTag, .blk, .br, .aTag, .strongTag], fontSize: fontSize, paragraphStyle: needStyle ? style : nil, baselineOffset: baselineOffset)
+            let attr = html.handle(fontSize: fontSize, paragraphStyle: needStyle ? style : nil, baselineOffset: baselineOffset)
             self.init(attr: attr)
         }
     }

@@ -13,7 +13,9 @@ class QueContentEssayCell: UITableViewCell {
     // 用来通知外部 tableView 做更新
     var contentSizeDidChange: (() -> Void)?
     
-    var textDidChange: ((UITextView, String) -> Void)?
+    var textDidChange: ((String) -> Void)?
+    
+    var actionDidChange: ((IndexPath) -> Void)?
     
     var observation: NSKeyValueObservation?
     
@@ -26,6 +28,8 @@ class QueContentEssayCell: UITableViewCell {
     @IBOutlet weak var textViewLeft: NSLayoutConstraint!
     
     @IBOutlet weak var textViewRight: NSLayoutConstraint!
+    
+    var indexPath: IndexPath!
     
     var model: QueContentEssayModel! {
         didSet {
@@ -92,6 +96,10 @@ class QueContentEssayCell: UITableViewCell {
 extension QueContentEssayCell: UITextViewDelegate {
     
     func textViewDidChange(_ textView: UITextView) {
-        textDidChange?(textView, textView.text)
+        textDidChange?(textView.text)
+    }
+    
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        actionDidChange?(indexPath)
     }
 }

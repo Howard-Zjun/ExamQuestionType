@@ -40,6 +40,37 @@ class QueLevel2: NSObject {
         self.no = no
         self.isNormal = isNormal
     }
+    
+    func resolver(isResult: Bool) -> [QueContentModel] {
+        if type == .SelectFillBlank {
+            return QueContentResolver.selectFillBlankResolver(queLevel2: self, isResult: isResult)
+        } else {
+            var queue: [QueLevel2] = [self]
+            var models: [QueContentModel] = []
+            var index = 0
+            while index < queue.count {
+                let temp = queue[index]
+                
+                if temp.type == .FillBlank {
+                    models += QueContentResolver.fillBlankResolver(queLevel2: temp, isResult: isResult)
+                } else if temp.type == .Essay {
+                    models += QueContentResolver.essayResolver(queLevel2: temp, isResult: isResult)
+                } else if temp.type == .Select {
+                    models += QueContentResolver.selectResolver(queLevel2: temp, isResult: isResult)
+                } else {
+                    models += QueContentResolver.normalResolver(queLevel2: temp, isResult: isResult)
+                }
+                
+                if !temp.isNormal, let subLevel2 = temp.subLevel2 {
+                    queue += subLevel2
+                }
+                
+                index += 1
+            }
+            
+            return models
+        }
+    }
 }
 
 extension QueLevel2 {

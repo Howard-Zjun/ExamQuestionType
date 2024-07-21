@@ -10,6 +10,8 @@ import SnapKit
 
 class QueContentImgCell: UITableViewCell {
     
+    var contentSizeDidChange: (() -> Void)?
+    
     var model: QueContentImgModel! {
         didSet {
             imgView.snp.updateConstraints { make in
@@ -23,12 +25,13 @@ class QueContentImgCell: UITableViewCell {
             } else {
                 let tempModel = model
                 imgView.sd_setImage(with: model.imageModel.src) { [weak self] img, _, _, _ in
-                    guard tempModel == self?.model else { return }
+                    guard let self = self else { return }
                     if let img = img {
-                        self?.imgFit(width: img.size.width, height: img.size.height)
+                        imgFit(width: img.size.width, height: img.size.height)
                     } else {
-                        self?.imgFit(width: 100, height: 100)
+                        imgFit(width: 100, height: 100)
                     }
+                    contentSizeDidChange?()
                 }
             }
         }

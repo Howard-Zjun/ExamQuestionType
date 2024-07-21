@@ -42,7 +42,7 @@ class QueContentDescribeCell: UITableViewCell {
     var observation: NSKeyValueObservation?
 
     // MARK: - view
-    @IBOutlet weak var textView: UITextView! {
+    @IBOutlet weak var textView: DisRangeAbleTextView! {
         didSet {
             textView.font = .systemFont(ofSize: 17)
             textView.textColor = .init(hex: 0x333333)

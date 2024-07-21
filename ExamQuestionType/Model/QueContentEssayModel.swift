@@ -21,6 +21,8 @@ class QueContentEssayModel: NSObject, QueContentModel {
     
     let index: Int
     
+    var isFocuns: Bool = false
+    
     let isResult: Bool
     
     init?(queLevel2: QueLevel2, index: Int, isResult: Bool) {

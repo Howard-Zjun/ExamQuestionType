@@ -40,11 +40,17 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     weak var delegate: QueContentModelDelegate?
     
+    let baselineOffset = 5
+    
+    let fontSize = 18.0
+    
+    let isResult: Bool
+
     var focunsIndex: Int? {
         didSet {
             if let focunsIndex = oldValue, focunsIndex < fillBlankAttrArr.count {
                 if getAnswer(index: focunsIndex) == nil {
-                    let newFillBlankStr = NSMutableAttributedString.emptyFillBlankAttrStr(index: focunsIndex)
+                    let newFillBlankStr = NSMutableAttributedString.emptyFillBlankAttrWithIcon(index: focunsIndex, baselineOffset: baselineOffset)
                     let oldFillBlankStr = fillBlankAttrArr[focunsIndex]
                     let itemInAllIndex = (allAttrArr as NSArray).index(of: oldFillBlankStr)
                     fillBlankAttrArr[focunsIndex] = newFillBlankStr
@@ -54,7 +60,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             }
             if let focunsIndex = focunsIndex, focunsIndex < fillBlankAttrArr.count  {
                 if getAnswer(index: focunsIndex) == nil {
-                    fillBlankAttrArr[focunsIndex].replaceCharacters(in: .init(location: 1, length: 1), with: "⌘")
+                    fillBlankAttrArr[focunsIndex].replaceCharacters(in: .init(location: fillBlankAttrArr[focunsIndex].length / 2, length: 1), with: "⌘")
                 }
                 fillBlankAttrArr[focunsIndex].addAttribute(.underlineColor, value: UIColor(hex: 0x2F81FB), range: .init(location: 0, length: fillBlankAttrArr[focunsIndex].length))
             }
@@ -62,8 +68,6 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             delegate?.contentDidChange(model: self)
         }
     }
-    
-    let isResult: Bool
     
     convenience init?(queLevel2: QueLevel2, isResult: Bool = false, inFillBlank: Int = 0) {
         let no = Tool.noHandle(no: queLevel2.no)
@@ -82,7 +86,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             correctAnswers = queLevel2.correctAnswers
         } else {
             userAnswers = queLevel2.subLevel2?.map({ $0.userAnswers.first ?? "" }) ?? []
-            correctAnswers = queLevel2.subLevel2?.flatMap({ $0.correctAnswers ?? [] })
+            correctAnswers = queLevel2.subLevel2?.map({ $0.correctAnswers?.first ?? "" })
         }
         
         if isResult {
@@ -146,10 +150,10 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         var text = text
         if text.isEmpty { // 若是没有内容则变为空的内容
             text = spaceStr
-            newFillBlank = .emptyFillBlankAttrStr(index: index, paragraphStyle: paragraphStyle, needEmptyPlacehold: false)
+            newFillBlank = .emptyFillBlankAttr(index: index, baselineOffset: baselineOffset)
             newFillBlank.addAttribute(.underlineColor, value: UIColor(hex: 0x2F81FB), range: .init(location: 0, length: newFillBlank.length))
         } else {
-            newFillBlank = text.fillBlankAttr(font: .systemFont(ofSize: 18), link: "\(snFillBlankURLPrefix)\(snSeparate)\(index)", paragraphStyle: paragraphStyle, isFocus: true)
+            newFillBlank = text.fillBlankAttr(font: .systemFont(ofSize: fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(index)", underlineColor: .init(hex: 0x2F81FB),  baselineOffset: baselineOffset)
         }
         
         let oldFillBlank = fillBlankAttrArr[index]
@@ -185,7 +189,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         for itemAttrStr in allAttrArr {
             resultAttributed.append(itemAttrStr)
         }
-        resultAttributed.addAttribute(.baselineOffset, value: NSNumber(value: 5), range: .init(location: 0, length: resultAttributed.length))
+//        resultAttributed.addAttribute(.baselineOffset, value: NSNumber(value: 5), range: .init(location: 0, length: resultAttributed.length))
         resultAttributed.addAttribute(.paragraphStyle, value: paragraphStyle, range: .init(location: 0, length: resultAttributed.length))
         self.resultAttributed = resultAttributed
     }
@@ -201,7 +205,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
                 
-                allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag, .br, .aTag, .strongTag] ,fontSize: 18, paragraphStyle: paragraphStyle))
+                allAttrArr.append(noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset))
             }
             
             let tempStr = (html as NSString).substring(with: range)
@@ -211,8 +215,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
                 let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
                 resolver(html: content, userAnswers: userAnswers)
                 allAttrArr.append(.init(string: "\n", attributes: [
-                    .font : UIFont.systemFont(ofSize: 18),
-                    .paragraphStyle : paragraphStyle,
+                    .font : UIFont.systemFont(ofSize: fontSize),
                 ]))
             } else if tempStr.hasPrefix("<blk") {
                 let fillBlankIndex = fillBlankAttrArr.count
@@ -227,7 +230,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag, .br, .aTag, .strongTag] ,fontSize: 18, paragraphStyle: paragraphStyle))
+            allAttrArr.append(noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset))
         }
     }
 
@@ -241,9 +244,9 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         
         let fillBlankAttrStr: NSMutableAttributedString!
         if haveAnswer {
-            fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: 18), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", paragraphStyle: paragraphStyle)
+            fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", baselineOffset: baselineOffset)
         } else {
-            fillBlankAttrStr = .emptyFillBlankAttrStr(index: fillBlankIndex, paragraphStyle: paragraphStyle)
+            fillBlankAttrStr = .emptyFillBlankAttrWithIcon(index: fillBlankIndex, baselineOffset: baselineOffset)
         }
         fillBlankAttrArr.append(fillBlankAttrStr)
         allAttrArr.append(fillBlankAttrStr)
@@ -254,8 +257,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             for imgModel in imgModels {
                 
                 allAttrArr.append(.init(string: "\n", attributes: [
-                    .font : UIFont.systemFont(ofSize: 18),
-                    .paragraphStyle : paragraphStyle,
+                    .font : UIFont.systemFont(ofSize: fontSize),
                 ]))
                 
                 allAttrArr.append(.init()) // 占位
@@ -295,7 +297,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
             
-                allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag, .br, .aTag, .strongTag] ,fontSize: 18, paragraphStyle: paragraphStyle))
+                allAttrArr.append(noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset))
             }
             let tempStr = (html as NSString).substring(with: range)
             if tempStr.hasPrefix("<p") {
@@ -303,8 +305,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
                 let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
                 resolverResult(html: content, userAnswers: userAnswers, correctAnswers: correctAnswers)
                 allAttrArr.append(.init(string: "\n", attributes: [
-                    .font : UIFont.systemFont(ofSize: 18),
-                    .paragraphStyle : paragraphStyle,
+                    .font : UIFont.systemFont(ofSize: fontSize),
                 ]))
             } else if tempStr.hasPrefix("<blk") {
                 let fillBlankIndex = fillBlankAttrArr.count
@@ -319,7 +320,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(noHandleStr.handle(type: [.uTag, .iTag, .bTag, .br, .aTag, .strongTag] ,fontSize: 18, paragraphStyle: paragraphStyle))
+            allAttrArr.append(noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset))
         }
     }
     
@@ -333,9 +334,9 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         
         let fillBlankAttrStr: NSMutableAttributedString!
         if haveAnswer {
-            fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: 18), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", paragraphStyle: paragraphStyle)
+            fillBlankAttrStr = enterStr.fillBlankAttr(font: .systemFont(ofSize: fontSize), link: "\(snFillBlankURLPrefix)\(snSeparate)\(fillBlankIndex)", baselineOffset: baselineOffset)
         } else {
-            fillBlankAttrStr = .emptyFillBlankAttrStr(index: fillBlankIndex, paragraphStyle: paragraphStyle, needEmptyPlacehold: false)
+            fillBlankAttrStr = .emptyFillBlankAttr(index: fillBlankIndex, baselineOffset: baselineOffset)
         }
         
         var imgStr = "wrong_img"
