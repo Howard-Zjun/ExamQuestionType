@@ -72,16 +72,13 @@ class EQTableModel: NSObject {
             let hpple = TFHpple(data: data, isXML: false)
             let arr = (hpple?.search(withXPathQuery: "//table") as? [TFHppleElement])?.first?.children as? [TFHppleElement]
             for item in arr ?? [] {
-                if item.tagName == "thead" {
-                    if let model = EQTableHeadModel(element: item, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
-                        theadModel = model
-                    }
-                } else if item.tagName == "tbody" {
+                if let model = EQTableHeadModel(element: item, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                    theadModel = model
+                } else if let model = EQTableTrModel(element: item, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                    trModelArr.append(model)
+                } else {
                     let itemChildren = item.children as? [TFHppleElement]
                     for child in itemChildren ?? [] {
-                        if child.tagName != "tr" {
-                            continue
-                        }
                         if let model = EQTableTrModel(element: child, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                             trModelArr.append(model)
                         }
