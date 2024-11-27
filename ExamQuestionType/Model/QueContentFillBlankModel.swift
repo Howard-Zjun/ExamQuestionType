@@ -69,6 +69,8 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         }
     }
     
+    let regexPression = "(<blk.*?</blk>)|(<img.*?>)|(<u.*?</u>)|(<p.*?</p>)"
+    
     convenience init?(queLevel2: QueLevel2, isResult: Bool = false, inFillBlank: Int = 0) {
         let no = Tool.noHandle(no: queLevel2.no)
         let content = queLevel2.content ?? ""
@@ -194,10 +196,13 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         self.resultAttributed = resultAttributed
     }
     
-    func resolver(html: String, userAnswers: [String]) {
-        let pRegex = try! NSRegularExpression(pattern: "(<blk.*?</blk>)|(<img.*?>)|(<p>.*?</p>)")
+    @discardableResult
+    func resolver(html: String, userAnswers: [String]) -> [NSMutableAttributedString] {
+        let pRegex = try! NSRegularExpression(pattern: regexPression)
         
         var lastIndex = 0
+        
+        var ret: [NSMutableAttributedString] = []
         
         pRegex.enumerateMatches(in: html, range: .init(location: 0, length: html.count)) { match, _, _ in
             guard let range = match?.range else { return }
@@ -205,7 +210,9 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
                 
-                allAttrArr.append(noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset))
+                let attr = noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset)
+                allAttrArr.append(attr)
+                ret.append(attr)
             }
             
             let tempStr = (html as NSString).substring(with: range)
@@ -213,7 +220,8 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             if tempStr.hasPrefix("<p") {
                 let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
                 let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
-                resolver(html: content, userAnswers: userAnswers)
+                let tempRet = resolver(html: content, userAnswers: userAnswers)
+                ret += tempRet
                 allAttrArr.append(.init(string: "\n", attributes: [
                     .font : UIFont.systemFont(ofSize: fontSize),
                 ]))
@@ -222,6 +230,17 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
                 resolverBLK(fillBlankIndex: fillBlankIndex, userAnswers: userAnswers)
             } else if tempStr.hasPrefix("<img") {
                 resolverIMG(content: tempStr)
+            } else if tempStr.hasPrefix("<u") {
+                let firstUEnd = (tempStr as NSString).range(of: ">").location + 1
+                let content = (tempStr as NSString).substring(with: .init(location: firstUEnd, length: tempStr.count - firstUEnd - 4)) // 去掉<u></u>
+                let tempRet = resolver(html: content, userAnswers: userAnswers)
+                // 将文本加下划线
+                for item in tempRet {
+                    item.addAttributes([
+                        .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
+                        .underlineColor : UIColor.black,
+                    ], range: .init(location: 0, length: item.length))
+                }
             }
             
             lastIndex = range.location + range.length
@@ -230,8 +249,12 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset))
+            let attr = noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset)
+            allAttrArr.append(attr)
+            ret.append(attr)
         }
+        
+        return ret
     }
 
     func resolverBLK(fillBlankIndex: Int, userAnswers: [String]) {
@@ -286,10 +309,13 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         }
     }
     
-    func resolverResult(html: String, userAnswers: [String], correctAnswers: [String]) {
-        let pRegex = try! NSRegularExpression(pattern: "(<blk.*?</blk>)|(<img.*?>)|(<p.*?</p>)")
+    @discardableResult
+    func resolverResult(html: String, userAnswers: [String], correctAnswers: [String]) -> [NSMutableAttributedString] {
+        let pRegex = try! NSRegularExpression(pattern: regexPression)
         
         var lastIndex = 0
+        
+        var ret: [NSMutableAttributedString] = []
         
         pRegex.enumerateMatches(in: html, range: .init(location: 0, length: html.count)) { match, _, _ in
             guard let range = match?.range else { return }
@@ -297,13 +323,16 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             if range.location != lastIndex { // 有未识别内容
                 let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
             
-                allAttrArr.append(noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset))
+                let attr = noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset)
+                allAttrArr.append(attr)
+                ret.append(attr)
             }
             let tempStr = (html as NSString).substring(with: range)
             if tempStr.hasPrefix("<p") {
                 let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
                 let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
-                resolverResult(html: content, userAnswers: userAnswers, correctAnswers: correctAnswers)
+                let tempRet = resolverResult(html: content, userAnswers: userAnswers, correctAnswers: correctAnswers)
+                ret += tempRet
                 allAttrArr.append(.init(string: "\n", attributes: [
                     .font : UIFont.systemFont(ofSize: fontSize),
                 ]))
@@ -312,6 +341,17 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
                 resolverResultBLK(fillBlankIndex: fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers)
             } else if tempStr.hasPrefix("<img") {
                 resolverIMG(content: tempStr)
+            } else if tempStr.hasPrefix("<u") {
+                let firstUEnd = (tempStr as NSString).range(of: ">").location + 1
+                let content = (tempStr as NSString).substring(with: .init(location: firstUEnd, length: tempStr.count - firstUEnd - 4)) // 去掉<u></u>
+                let tempRet = resolverResult(html: html, userAnswers: userAnswers, correctAnswers: correctAnswers)
+                // 将文本加下划线
+                for item in tempRet {
+                    item.addAttributes([
+                        .underlineStyle : NSNumber(value: NSUnderlineStyle.single.rawValue),
+                        .underlineColor : UIColor.black,
+                    ], range: .init(location: 0, length: item.length))
+                }
             }
             
             lastIndex = range.location + range.length
@@ -320,8 +360,12 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         if lastIndex < html.count { // 后面有未识别的内容
             let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
             
-            allAttrArr.append(noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset))
+            let attr = noHandleStr.handle(fontSize: fontSize, baselineOffset: baselineOffset)
+            allAttrArr.append(attr)
+            ret.append(attr)
         }
+        
+        return ret
     }
     
     func resolverResultBLK(fillBlankIndex: Int, userAnswers: [String], correctAnswers: [String]) {

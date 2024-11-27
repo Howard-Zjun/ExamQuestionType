@@ -372,6 +372,8 @@ class EQTableTdModel: NSObject {
     
     var updateBlock: (() -> Void)?
     
+    let regexPression = "(<blk.*?</blk>)|(<blk.*?/>)|(<p.*?</p>)"
+    
     init?(element: TFHppleElement, queLevel2: QueLevel2, fillBlankIndex: inout Int, isResult: Bool) {
         if element.tagName != "td" {
             return nil
@@ -522,7 +524,7 @@ class EQTableTdModel: NSObject {
     
     // MARK: - resolver
     func resolver(html: String, fillBlankIndex: inout Int, userAnswers: [String]) {
-        let pRegex = try! NSRegularExpression(pattern: "(<blk.*?</blk>)|(<blk.*?/>)|(<p.*?</p>)")
+        let pRegex = try! NSRegularExpression(pattern: regexPression)
         
         var lastIndex = 0
         
@@ -613,7 +615,7 @@ class EQTableTdModel: NSObject {
     }
     
     func resolverResult(html: String, fillBlankIndex: inout Int, userAnswers: [String], correctAnswers: [String]) {
-        let pRegex = try! NSRegularExpression(pattern: "(<blk.*?</blk>)|(<blk.*?/>)|(<p.*?</p>)")
+        let pRegex = try! NSRegularExpression(pattern: regexPression)
         
         var lastIndex = 0
         
