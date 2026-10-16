@@ -9,17 +9,17 @@ import UIKit
 
 class QueDetailViewController: UIViewController {
 
-    var queLevel1: QueLevel1!
+    var questionCategory: QuestionCategory!
     
     var index = 0 {
         didSet {
-            queLevel2 = queLevel1.queLevel2Arr[index]
+            question = questionCategory.questions[index]
         }
     }
     
-    var queLevel2: QueLevel2! {
+    var question: QuestionNode! {
         didSet {
-            self.models = queLevel2.resolver(isResult: false)
+            self.models = question.resolver(isResult: false)
         }
     }
     
@@ -153,15 +153,15 @@ class QueDetailViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow(_:)), name: UIResponder.keyboardDidShowNotification, object: nil)
     }
     
-    func config(queLevel1: QueLevel1) {
+    func config(questionCategory: QuestionCategory) {
         view.isHidden = false
-        self.queLevel1 = queLevel1
+        self.questionCategory = questionCategory
         self.index = 0
     }
     
     // MARK: - target
     @objc func toNext() {
-        if index + 1 < queLevel1.queLevel2Arr.count {
+        if index + 1 < questionCategory.questions.count {
             index += 1
         }
     }

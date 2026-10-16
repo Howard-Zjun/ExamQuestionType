@@ -60,20 +60,20 @@ class QueContentResolver {
         return retModels
     }
     
-    static func normalResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
-        let no = Tool.noHandle(no: queLevel2.no)
-        let content = queLevel2.content ?? ""
+    static func normalResolver(question: QuestionNode, isResult: Bool = false) -> [QueContentModel] {
+        let no = Tool.noHandle(no: question.no)
+        let content = question.content ?? ""
         let html = no + content
         guard !html.isEmpty else {
             return []
         }
         
-        let tempModels = normalResolver(queLevel2: queLevel2, html: html, isResult: isResult)
+        let tempModels = normalResolver(question: question, html: html, isResult: isResult)
         
         return fixDescribe(contentModels: tempModels)
     }
     
-    static func normalResolver(queLevel2: QueLevel2, html: String, isResult: Bool) -> [QueContentModel] {
+    static func normalResolver(question: QuestionNode, html: String, isResult: Bool) -> [QueContentModel] {
         var ret: [QueContentModel] = []
         let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)")
 
@@ -96,7 +96,7 @@ class QueContentResolver {
                 let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
                 let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
 
-                let tempRet = normalResolver(queLevel2: queLevel2, html: content, isResult: isResult)
+                let tempRet = normalResolver(question: question, html: content, isResult: isResult)
                 // 处理对齐
                 if let aligment = tempStr.resolverPAligment() {
                     for temp in tempRet {
@@ -110,7 +110,7 @@ class QueContentResolver {
                     ret.append(describeModel)
                 }
             } else if tempStr.hasPrefix("<table") {
-                if let tableModel = QueContentTableModel(queLevel2: queLevel2, html: tempStr, isResult: isResult) {
+                if let tableModel = QueContentTableModel(question: question, html: tempStr, isResult: isResult) {
                     ret.append(tableModel)
                 }
             } else if tempStr.hasPrefix("<img") {
@@ -138,20 +138,20 @@ class QueContentResolver {
     }
 
     
-    static func essayResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
-        let no = Tool.noHandle(no: queLevel2.no)
-        let content = queLevel2.content ?? ""
+    static func essayResolver(question: QuestionNode, isResult: Bool = false) -> [QueContentModel] {
+        let no = Tool.noHandle(no: question.no)
+        let content = question.content ?? ""
         let html = no + content
         guard !html.isEmpty else {
             return []
         }
         
-        let tempModels = essayResolver(queLevel2: queLevel2, html: html, essayOffset: 0, isResult: isResult)
+        let tempModels = essayResolver(question: question, html: html, essayOffset: 0, isResult: isResult)
         
         return fixDescribe(contentModels: tempModels)
     }
     
-    static func essayResolver(queLevel2: QueLevel2, html: String, essayOffset: Int, isResult: Bool) -> [QueContentModel] {
+    static func essayResolver(question: QuestionNode, html: String, essayOffset: Int, isResult: Bool) -> [QueContentModel] {
         var ret: [QueContentModel] = []
         let pRegex = try! NSRegularExpression(pattern: "(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)")
 
@@ -175,7 +175,7 @@ class QueContentResolver {
             if tempStr.hasPrefix("<p") {
                 let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
                 let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
-                let tempRet = essayResolver(queLevel2: queLevel2, html: content, essayOffset: essayOffset + essayIndex, isResult: isResult)
+                let tempRet = essayResolver(question: question, html: content, essayOffset: essayOffset + essayIndex, isResult: isResult)
                 if let aligment = tempStr.resolverPAligment() {
                     for temp in tempRet {
                         if let describeModel = temp as? QueContentDescribeModel {
@@ -188,7 +188,7 @@ class QueContentResolver {
                     ret.append(describeModel)
                 }
             } else if tempStr.hasPrefix("<table") {
-                if let tableModel = QueContentTableModel(queLevel2: queLevel2, html: tempStr, isResult: isResult) {
+                if let tableModel = QueContentTableModel(question: question, html: tempStr, isResult: isResult) {
                     ret.append(tableModel)
                 }
             } else if tempStr.hasPrefix("<img") {
@@ -196,7 +196,7 @@ class QueContentResolver {
                     ret.append(imgModel)
                 }
             } else if tempStr.hasPrefix("<blk") {
-                if let essayModel = QueContentEssayModel(queLevel2: queLevel2, index: essayOffset  + essayIndex, isResult: isResult) {
+                if let essayModel = QueContentEssayModel(question: question, index: essayOffset  + essayIndex, isResult: isResult) {
                     ret.append(essayModel)
                     
                     essayIndex += 1
@@ -218,40 +218,40 @@ class QueContentResolver {
     }
 
     
-    static func fillBlankResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
+    static func fillBlankResolver(question: QuestionNode, isResult: Bool = false) -> [QueContentModel] {
         var retModels: [QueContentModel] = []
         
-        if let tableFillBlankModel = QueContentTableModel(queLevel2: queLevel2, isResult: isResult) {
+        if let tableFillBlankModel = QueContentTableModel(question: question, isResult: isResult) {
             retModels.append(tableFillBlankModel)
-        } else if let fillBlankModel = QueContentFillBlankModel(queLevel2: queLevel2, isResult: isResult) {
+        } else if let fillBlankModel = QueContentFillBlankModel(question: question, isResult: isResult) {
             retModels.append(fillBlankModel)
         }
         
         return retModels
     }
     
-    static func selectFillBlankResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
+    static func selectFillBlankResolver(question: QuestionNode, isResult: Bool = false) -> [QueContentModel] {
         var retModels: [QueContentModel] = []
         
-        if let selectFillBlankModel = QueContentSelectFillBlankModel(queLevel2: queLevel2, isResult: isResult) {
+        if let selectFillBlankModel = QueContentSelectFillBlankModel(question: question, isResult: isResult) {
             retModels.append(selectFillBlankModel)
         }
         return retModels
     }
     
-    static func selectResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
+    static func selectResolver(question: QuestionNode, isResult: Bool = false) -> [QueContentModel] {
         var retModels: [QueContentModel] = []
         
-        retModels += normalResolver(queLevel2: queLevel2, isResult: isResult)
-        if let selectOptionModel = QueContentSelectOptionModel(queLevel2: queLevel2, isResult: isResult) {
+        retModels += normalResolver(question: question, isResult: isResult)
+        if let selectOptionModel = QueContentSelectOptionModel(question: question, isResult: isResult) {
             retModels.append(selectOptionModel)
         }
         
         return retModels
     }
     
-    static func conversationResolver(queLevel2: QueLevel2, isResult: Bool = false) -> [QueContentModel] {
-        let retModels = normalResolver(queLevel2: queLevel2, isResult: isResult)
+    static func conversationResolver(question: QuestionNode, isResult: Bool = false) -> [QueContentModel] {
+        let retModels = normalResolver(question: question, isResult: isResult)
         
         return retModels
     }

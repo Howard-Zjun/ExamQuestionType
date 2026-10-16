@@ -19,8 +19,8 @@ class QueContentVideoModel: NSObject, QueContentModel {
 
     let videoUrl: String
     
-    init?(queLevel2: QueLevel2) {
-        guard let videoUrl = queLevel2.videoUrl else {
+    init?(question: QuestionNode) {
+        guard let videoUrl = question.videoUrl else {
             return nil
         }
         self.videoUrl = videoUrl

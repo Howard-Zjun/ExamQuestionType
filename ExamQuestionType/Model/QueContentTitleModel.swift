@@ -26,8 +26,8 @@ class QueContentTitleModel: NSObject, QueContentModel {
         self.qstTitle = qsTitle
     }
     
-    init(queLevel1: QueLevel1) {
-        self.title = queLevel1.name
-        self.qstTitle = queLevel1.descri
+    init(questionCategory: QuestionCategory) {
+        self.title = questionCategory.name
+        self.qstTitle = questionCategory.descri
     }
 }

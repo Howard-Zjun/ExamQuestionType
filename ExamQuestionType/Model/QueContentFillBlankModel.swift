@@ -23,7 +23,7 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     var estimatedHeight: CGFloat?
 
-    let queLevel2: QueLevel2
+    let question: QuestionNode
     
     var fillBlankAttrArr: [NSMutableAttributedString]
     
@@ -71,24 +71,24 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     let regexPression = "(<blk.*?</blk>)|(<img.*?>)|(<u.*?</u>)|(<p.*?</p>)"
     
-    convenience init?(queLevel2: QueLevel2, isResult: Bool = false, inFillBlank: Int = 0) {
-        let no = Tool.noHandle(no: queLevel2.no)
-        let content = queLevel2.content ?? ""
+    convenience init?(question: QuestionNode, isResult: Bool = false, inFillBlank: Int = 0) {
+        let no = Tool.noHandle(no: question.no)
+        let content = question.content ?? ""
         let html = no + content
-        guard queLevel2.type == .FillBlank && !html.isEmpty else {
+        guard question.type == .FillBlank && !html.isEmpty else {
             return nil
         }
         
-        self.init(queLevel2: queLevel2, isResult: isResult)
+        self.init(question: question, isResult: isResult)
         
         var userAnswers: [String] = []
         var correctAnswers: [String]?
-        if queLevel2.isNormal {
-            userAnswers = queLevel2.userAnswers
-            correctAnswers = queLevel2.correctAnswers
+        if question.isNormal {
+            userAnswers = question.userAnswers
+            correctAnswers = question.correctAnswers
         } else {
-            userAnswers = queLevel2.subLevel2?.map({ $0.userAnswers.first ?? "" }) ?? []
-            correctAnswers = queLevel2.subLevel2?.map({ $0.correctAnswers?.first ?? "" })
+            userAnswers = question.subquestions?.map({ $0.userAnswers.first ?? "" }) ?? []
+            correctAnswers = question.subquestions?.map({ $0.correctAnswers?.first ?? "" })
         }
         
         if isResult {
@@ -108,11 +108,11 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
         makeResultAttr()
     }
     
-    init(queLevel2: QueLevel2, isResult: Bool) {
+    init(question: QuestionNode, isResult: Bool) {
         self.allAttrArr = []
         self.fillBlankAttrArr = []
         self.resultAttributed = .init()
-        self.queLevel2 = queLevel2
+        self.question = question
         self.isResult = isResult
     }
     
@@ -123,15 +123,15 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     }
     
     func getAnswer(index: Int) -> String? {
-        if queLevel2.isNormal {
-            if index >= queLevel2.userAnswers.count {
+        if question.isNormal {
+            if index >= question.userAnswers.count {
                 return nil
             }
-            if !queLevel2.userAnswers[index].isEmpty {
-                return queLevel2.userAnswers[index]
+            if !question.userAnswers[index].isEmpty {
+                return question.userAnswers[index]
             }
         } else {
-            if let qst = queLevel2.subLevel2?[index] {
+            if let qst = question.subquestions?[index] {
                 if qst.userAnswers.count <= 0 {
                     return nil
                 }
@@ -171,13 +171,13 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
             print("\(NSStringFromClass(Self.self)) \(#function): 未选择填空")
             return
         }
-        if queLevel2.isNormal {
-            while queLevel2.userAnswers.count <= index {
-                queLevel2.userAnswers.append("")
+        if question.isNormal {
+            while question.userAnswers.count <= index {
+                question.userAnswers.append("")
             }
-            queLevel2.userAnswers[index] = text
+            question.userAnswers[index] = text
         } else {
-            if let qst = queLevel2.subLevel2?[index] {
+            if let qst = question.subquestions?[index] {
                 while qst.userAnswers.count <= 0 {
                     qst.userAnswers.append("")
                 }

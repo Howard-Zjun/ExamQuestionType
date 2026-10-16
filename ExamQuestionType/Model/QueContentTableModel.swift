@@ -30,8 +30,8 @@ class QueContentTableModel: NSObject, QueContentModel {
         }
     }
     
-    init?(queLevel2: QueLevel2, html: String, isResult: Bool = false) {
-        guard let tableModel = EQTableModel(html: html, queLevel2: queLevel2, isResult: isResult) else {
+    init?(question: QuestionNode, html: String, isResult: Bool = false) {
+        guard let tableModel = EQTableModel(html: html, question: question, isResult: isResult) else {
             return nil
         }
         tableModel.adjustSize(contentWidth: kScreenWidth - contentInset.left - contentInset.right)
@@ -43,11 +43,11 @@ class QueContentTableModel: NSObject, QueContentModel {
         }
     }
     
-    convenience init?(queLevel2: QueLevel2, isResult: Bool = false) {
-        guard let content = queLevel2.content else {
+    convenience init?(question: QuestionNode, isResult: Bool = false) {
+        guard let content = question.content else {
             return nil
         }
-        self.init(queLevel2: queLevel2, html: content, isResult: isResult)
+        self.init(question: question, html: content, isResult: isResult)
     }
 }
 
@@ -63,7 +63,7 @@ class EQTableModel: NSObject {
 
     var rowCount: Int
     
-    init?(html: String, queLevel2: QueLevel2, isResult: Bool) {
+    init?(html: String, question: QuestionNode, isResult: Bool) {
         if let data = html.data(using: .utf8) {
             var theadModel: EQTableHeadModel?
             var trModelArr: [EQTableTrModel] = []
@@ -72,14 +72,14 @@ class EQTableModel: NSObject {
             let hpple = TFHpple(data: data, isXML: false)
             let arr = (hpple?.search(withXPathQuery: "//table") as? [TFHppleElement])?.first?.children as? [TFHppleElement]
             for item in arr ?? [] {
-                if let model = EQTableHeadModel(element: item, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                if let model = EQTableHeadModel(element: item, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                     theadModel = model
-                } else if let model = EQTableTrModel(element: item, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                } else if let model = EQTableTrModel(element: item, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                     trModelArr.append(model)
                 } else {
                     let itemChildren = item.children as? [TFHppleElement]
                     for child in itemChildren ?? [] {
-                        if let model = EQTableTrModel(element: child, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                        if let model = EQTableTrModel(element: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                             trModelArr.append(model)
                         }
                     }
@@ -228,7 +228,7 @@ class EQTableHeadModel: NSObject {
 
     let trModelArr: [EQTableTrModel]
     
-    init?(element: TFHppleElement, queLevel2: QueLevel2, fillBlankIndex: inout Int, isResult: Bool) {
+    init?(element: TFHppleElement, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
         if element.tagName != "thead" {
             return nil
         }
@@ -237,7 +237,7 @@ class EQTableHeadModel: NSObject {
             if itemElement.tagName != "tr" {
                 continue
             }
-            if let model = EQTableTrModel(element: itemElement, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+            if let model = EQTableTrModel(element: itemElement, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                 trModelArr.append(model)
             }
         }
@@ -253,14 +253,14 @@ class EQTableTrModel: NSObject {
     
     let tdModelArr: [EQTableTdModel]
     
-    init?(element: TFHppleElement, queLevel2: QueLevel2, fillBlankIndex: inout Int, isResult: Bool) {
+    init?(element: TFHppleElement, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
         if element.tagName != "tr" {
             return nil
         }
         var tdModelArr: [EQTableTdModel] = []
         for itemElement in (element.children as? [TFHppleElement]) ?? [] {
             if itemElement.tagName == "td" {
-                if let model = EQTableTdModel(element: itemElement, queLevel2: queLevel2, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                if let model = EQTableTdModel(element: itemElement, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                     tdModelArr.append(model)
                 }
             }
@@ -330,7 +330,7 @@ class EQTableTdModel: NSObject {
     let isResult: Bool
     
     // MARK: - 填空需要
-    let queLevel2: QueLevel2
+    let question: QuestionNode
     // 填空偏移
     let fillBlankIndexOffset: Int
     
@@ -374,11 +374,11 @@ class EQTableTdModel: NSObject {
     
     let regexPression = "(<blk.*?</blk>)|(<blk.*?/>)|(<p.*?</p>)"
     
-    init?(element: TFHppleElement, queLevel2: QueLevel2, fillBlankIndex: inout Int, isResult: Bool) {
+    init?(element: TFHppleElement, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
         if element.tagName != "td" {
             return nil
         }
-        self.queLevel2 = queLevel2
+        self.question = question
         self.isResult = isResult
         self.fillBlankIndexOffset = fillBlankIndex
         // 跨行
@@ -415,17 +415,17 @@ class EQTableTdModel: NSObject {
             html = (element.raw as NSString).substring(with: .init(location: firstEnd, length: element.raw.count - firstEnd - 5))
         }
         var userAnswers: [String] = []
-        if queLevel2.isNormal {
-            userAnswers = queLevel2.userAnswers
+        if question.isNormal {
+            userAnswers = question.userAnswers
         } else {
-            userAnswers = queLevel2.subLevel2?.map({ $0.userAnswers.first ?? "" }) ?? []
+            userAnswers = question.subquestions?.map({ $0.userAnswers.first ?? "" }) ?? []
         }
         if isResult {
             var correctAnswers: [String]?
-            if queLevel2.isNormal {
-                correctAnswers = queLevel2.correctAnswers
+            if question.isNormal {
+                correctAnswers = question.correctAnswers
             } else {
-                correctAnswers = queLevel2.subLevel2?.flatMap({ $0.correctAnswers ?? [] })
+                correctAnswers = question.subquestions?.flatMap({ $0.correctAnswers ?? [] })
             }
             resolverResult(html: html, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers ?? [])
         } else {
@@ -449,15 +449,15 @@ class EQTableTdModel: NSObject {
     }
     
     func getAnswer(index: Int) -> String? {
-        if queLevel2.isNormal {
-            if index >= queLevel2.userAnswers.count {
+        if question.isNormal {
+            if index >= question.userAnswers.count {
                 return nil
             }
-            if !queLevel2.userAnswers[index].isEmpty {
-                return queLevel2.userAnswers[index]
+            if !question.userAnswers[index].isEmpty {
+                return question.userAnswers[index]
             }
         } else {
-            if let qst = queLevel2.subLevel2?[index] {
+            if let qst = question.subquestions?[index] {
                 if qst.userAnswers.count <= 0 {
                     return nil
                 }
@@ -497,13 +497,13 @@ class EQTableTdModel: NSObject {
             print("\(NSStringFromClass(Self.self)) \(#function): 未选择填空")
             return
         }
-        if queLevel2.isNormal {
-            while queLevel2.userAnswers.count <= fillBlankIndexOffset + index {
-                queLevel2.userAnswers.append("")
+        if question.isNormal {
+            while question.userAnswers.count <= fillBlankIndexOffset + index {
+                question.userAnswers.append("")
             }
-            queLevel2.userAnswers[fillBlankIndexOffset + index] = text
+            question.userAnswers[fillBlankIndexOffset + index] = text
         } else {
-            if let qst = queLevel2.subLevel2?[fillBlankIndexOffset + index] {
+            if let qst = question.subquestions?[fillBlankIndexOffset + index] {
                 while qst.userAnswers.count <= 0  {
                     qst.userAnswers.append("")
                 }

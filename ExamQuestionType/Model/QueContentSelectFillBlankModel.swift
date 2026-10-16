@@ -16,36 +16,36 @@ class QueContentSelectFillBlankModel: QueContentFillBlankModel {
     // 选项
     let options: [[String]]
     
-    init?(queLevel2: QueLevel2, isResult: Bool = false, inSelectFillBlank: Int = 0) {
-        let no = Tool.noHandle(no: queLevel2.no)
-        let content = queLevel2.content ?? ""
+    init?(question: QuestionNode, isResult: Bool = false, inSelectFillBlank: Int = 0) {
+        let no = Tool.noHandle(no: question.no)
+        let content = question.content ?? ""
         let html = no + content
-        guard queLevel2.type == .SelectFillBlank, !html.isEmpty else {
+        guard question.type == .SelectFillBlank, !html.isEmpty else {
             return nil
         }
         
         var options: [[String]] = []
-        if queLevel2.isNormal {
-            for _ in 0..<(queLevel2.correctAnswers?.count ?? 0) {
-                options.append(queLevel2.options ?? [])
+        if question.isNormal {
+            for _ in 0..<(question.correctAnswers?.count ?? 0) {
+                options.append(question.options ?? [])
             }
             
         } else {
-            for item in queLevel2.subLevel2 ?? [] {
+            for item in question.subquestions ?? [] {
                 options.append(item.options ?? [])
             }
         }
         self.options = options
-        super.init(queLevel2: queLevel2, isResult: isResult)
+        super.init(question: question, isResult: isResult)
 
         var userAnswers: [String] = []
         var correctAnswers: [String]?
-        if queLevel2.isNormal {
-            userAnswers = queLevel2.userAnswers
-            correctAnswers = queLevel2.correctAnswers
+        if question.isNormal {
+            userAnswers = question.userAnswers
+            correctAnswers = question.correctAnswers
         } else {
-            userAnswers = queLevel2.subLevel2?.map({ $0.userAnswers.first ?? "" }) ?? []
-            correctAnswers = queLevel2.subLevel2?.flatMap({ $0.correctAnswers ?? [] })
+            userAnswers = question.subquestions?.map({ $0.userAnswers.first ?? "" }) ?? []
+            correctAnswers = question.subquestions?.flatMap({ $0.correctAnswers ?? [] })
         }
         if isResult {
             resolverResult(html: html, userAnswers: userAnswers, correctAnswers: correctAnswers ?? [])

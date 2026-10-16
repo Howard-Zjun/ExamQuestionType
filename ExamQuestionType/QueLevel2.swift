@@ -1,5 +1,5 @@
 //
-//  QueLevel2.swift
+//  QuestionNode.swift
 //  ExamQuestionType
 //
 //  Created by Howard-Zjun on 2024/06/21.
@@ -7,13 +7,13 @@
 
 import UIKit
 
-class QueLevel2: NSObject {
+class QuestionNode: NSObject {
 
     let videoUrl: String?
     
     let voiceUrl: String?
     
-    let subLevel2: [QueLevel2]?
+    let subquestions: [QuestionNode]?
     
     var content: String?
     
@@ -21,7 +21,7 @@ class QueLevel2: NSObject {
     
     let options: [String]?
     
-    let type: QueLevel2Type
+    let type: QuestionNodeType
     
     let no: String?
     
@@ -29,10 +29,10 @@ class QueLevel2: NSObject {
     
     var userAnswers: [String] = []
     
-    init(videoUrl: String?, voiceUrl: String?, subLevel2: [QueLevel2]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QueLevel2Type, no: String?, isNormal: Bool) {
+    init(videoUrl: String?, voiceUrl: String?, subquestions: [QuestionNode]?, content: String?, correctAnswers: [String]?, options: [String]?, type: QuestionNodeType, no: String?, isNormal: Bool) {
         self.videoUrl = videoUrl
         self.voiceUrl = voiceUrl
-        self.subLevel2 = subLevel2
+        self.subquestions = subquestions
         self.content = content
         self.correctAnswers = correctAnswers
         self.options = options
@@ -43,26 +43,26 @@ class QueLevel2: NSObject {
     
     func resolver(isResult: Bool) -> [QueContentModel] {
         if type == .SelectFillBlank {
-            return QueContentResolver.selectFillBlankResolver(queLevel2: self, isResult: isResult)
+            return QueContentResolver.selectFillBlankResolver(question: self, isResult: isResult)
         } else {
-            var queue: [QueLevel2] = [self]
+            var queue: [QuestionNode] = [self]
             var models: [QueContentModel] = []
             var index = 0
             while index < queue.count {
                 let temp = queue[index]
                 
                 if temp.type == .FillBlank {
-                    models += QueContentResolver.fillBlankResolver(queLevel2: temp, isResult: isResult)
+                    models += QueContentResolver.fillBlankResolver(question: temp, isResult: isResult)
                 } else if temp.type == .Essay {
-                    models += QueContentResolver.essayResolver(queLevel2: temp, isResult: isResult)
+                    models += QueContentResolver.essayResolver(question: temp, isResult: isResult)
                 } else if temp.type == .Select {
-                    models += QueContentResolver.selectResolver(queLevel2: temp, isResult: isResult)
+                    models += QueContentResolver.selectResolver(question: temp, isResult: isResult)
                 } else {
-                    models += QueContentResolver.normalResolver(queLevel2: temp, isResult: isResult)
+                    models += QueContentResolver.normalResolver(question: temp, isResult: isResult)
                 }
                 
-                if !temp.isNormal, let subLevel2 = temp.subLevel2 {
-                    queue += subLevel2
+                if !temp.isNormal, let subquestions = temp.subquestions {
+                    queue += subquestions
                 }
                 
                 index += 1
@@ -73,10 +73,10 @@ class QueLevel2: NSObject {
     }
 }
 
-extension QueLevel2 {
+extension QuestionNode {
     
     /// 题目类型
-    enum QueLevel2Type: Int {
+    enum QuestionNodeType: Int {
         case FillBlank = 0
         case SelectFillBlank
         case Select

@@ -18,16 +18,16 @@ class QueContentVoiceModel: NSObject, QueContentModel {
     
     var estimatedHeight: CGFloat?
 
-    let queLevel2: QueLevel2
+    let question: QuestionNode
     
     let voiceUrl: String
     
-    init?(queLevel2: QueLevel2) {
-        guard let voiceUrl = queLevel2.voiceUrl, let url = URL(string: voiceUrl) else {
+    init?(question: QuestionNode) {
+        guard let voiceUrl = question.voiceUrl, let url = URL(string: voiceUrl) else {
             return nil
         }
         
-        self.queLevel2 = queLevel2
+        self.question = question
         self.voiceUrl = voiceUrl
         let asset = AVAsset(url: url)
     }

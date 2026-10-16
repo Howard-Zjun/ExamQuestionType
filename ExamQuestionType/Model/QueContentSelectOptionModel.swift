@@ -19,19 +19,19 @@ class QueContentSelectOptionModel: NSObject, QueContentModel {
 
     let options: [String]
     
-    let queLevel2: QueLevel2
+    let question: QuestionNode
     
     var selectIndex: Int?
     
     let isResult: Bool
     
-    init?(queLevel2: QueLevel2, isResult: Bool) {
-        guard let options = queLevel2.options, !options.isEmpty else {
+    init?(question: QuestionNode, isResult: Bool) {
+        guard let options = question.options, !options.isEmpty else {
             return nil
         }
         
         self.options = options
-        self.queLevel2 = queLevel2
+        self.question = question
         self.isResult = isResult
     }
 }

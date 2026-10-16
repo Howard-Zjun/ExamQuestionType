@@ -30,8 +30,8 @@ class QueContentImgModel: NSObject, QueContentModel {
         self.init(model: model)
     }
     
-    convenience init?(queLevel2: QueLevel2) {
-        guard let content = queLevel2.content else {
+    convenience init?(question: QuestionNode) {
+        guard let content = question.content else {
             return nil
         }
         self.init(html: content)
