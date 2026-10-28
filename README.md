@@ -38,6 +38,132 @@ flowchart TD
     K --> H
 ```
 
+## 解析是怎么做的
+
+项目的解析过程可以概括为：**正则匹配 → 递归拆解 → 按单元类型解析内容与属性 → 生成模型**。各步骤在解析过程中穿插执行，并不是先拆完所有标签再统一创建模型。
+
+1. **正则匹配**：根据题型选择表达式，使用 `.*?` 非贪婪匹配识别段落、图片、表格和作答标记等内容块，同时保留标签之间的普通文字与原文顺序。
+2. **递归拆解**：对段落等需要继续拆解的内容取出内部 HTML，递归识别其中的标签，逐步拆成可交给对应解析逻辑处理的内容单元；表格则交给专门的节点解析逻辑继续拆分。
+3. **解析内容与属性**：根据单元类型进一步处理。图片通过 TFHpple 读取地址和尺寸；表格通过 TFHpple 遍历行与单元格，读取合并属性；文字通过富文本扩展将行内标签转换为样式；作答标记根据题型转换为占位、填空片段或作文输入模型。
+4. **生成模型**：将解析结果组织为描述、图片、表格、填空等内容模型，再交给对应 Cell 展示。其中，填空模型会将文字、图片和空位片段组合成一份富文本，而不是为每个标签单独创建模型。
+
+### 正则拆解标签
+
+#### 普通题面和选择题面
+
+```regex
+(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)
+```
+
+- `<table>` → [表格模型 QueContentTableModel](#table-model)。
+- `<img>` → [图片模型 QueContentImgModel](#image-model)。
+- `<p>` → 递归拆解内部内容，文字生成[描述模型 QueContentDescribeModel](#describe-model)。
+- `<blk>` → 转为 `____` 占位，归入[描述模型](#describe-model)。
+- 选择题的 `options` 字段 → [选项模型 QueContentSelectOptionModel](#option-model)。
+
+#### 填空题面
+
+```regex
+(<blk.*?</blk>)|(<img.*?>)|(<u.*?</u>)|(<p.*?</p>)
+```
+
+- `<blk>`、`<u>`、`<p>` 和普通文字 → [填空模型 QueContentFillBlankModel](#fill-blank-model)，组合为带空位的富文本。
+- `<img>` → [图片属性解析 ImgModel](#image-model)，加载后由填空模型插入富文本附件。
+
+填空入口优先尝试[表格模型](#table-model)；表格结构由 TFHpple 解析，单元格内部使用：
+
+```regex
+(<blk.*?</blk>)|(<blk.*?/>)|(<p.*?</p>)
+```
+
+- `<blk>`、自闭合 `<blk .../>`、`<p>` 和普通文字 → [表格单元格模型 EQTableTdModel](#table-model)。
+
+#### 选择填空题面
+
+```regex
+(<blk.*?</blk>)|(<img.*?>)|(<u.*?</u>)|(<p.*?</p>)
+```
+
+- `<blk>`、`<u>`、`<p>` 和普通文字 → [选择填空模型 QueContentSelectFillBlankModel](#select-fill-blank-model)，继承填空模型的富文本解析。
+- `<img>` → [图片属性解析 ImgModel](#image-model)，加载后插入富文本附件。
+- 选项字段 → [选择填空模型](#select-fill-blank-model)，按空位索引关联选项。
+
+#### 作文题面
+
+```regex
+(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)
+```
+
+- `<table>` → [表格模型 QueContentTableModel](#table-model)。
+- `<img>` → [图片模型 QueContentImgModel](#image-model)。
+- `<p>` → 递归拆解内部内容，文字生成[描述模型 QueContentDescribeModel](#describe-model)。
+- `<blk>` → [作文模型 QueContentEssayModel](#essay-option-models)，展示作文输入区。
+
+### 模型解析网页元素
+
+正则拆解解决的是“这一段是什么标签、位于哪里”；模型解析解决的是“取出哪些内容和属性、转换成什么原生数据”。拆下来的 HTML 片段进入对应模型后，再通过 TFHpple 读取节点与属性，或通过富文本扩展把标签转换为文字样式。
+
+<a id="describe-model"></a>
+
+#### 描述模型 `QueContentDescribeModel`
+
+1. 通过 TFHpple 的 XPath `//p` 查找段落节点。
+2. 取出各段内容，转换成 `NSMutableAttributedString`，设置段落对齐等属性，按顺序添加换行并拼接；没有段落节点时，直接处理传入内容。
+3. 使用 `<u.*?</u>`、`<i.*?</i>` 等正则识别行内标签，去掉标签并对内部文字设置对应属性，例如下划线、粗体和斜体；同时处理换行标签和 HTML 实体。
+4. 输出最终的 `handleContentAttr`，交给 `QueContentDescribeCell` 展示。
+
+<a id="image-model"></a>
+
+#### 图片模型 `QueContentImgModel`
+
+1. 通过 TFHpple 的 XPath `//img` 查找图片节点。
+2. 读取各节点的 `src` 属性并转换为 URL，跳过缺少地址或无法转换为 URL 的节点。
+3. 读取可选的 `width`、`height` 属性，转换为数值，生成 `ImgModel`。
+4. `ImgModel.load(html:)` 返回图片模型数组；`QueContentImgModel(html:)` 取第一个保存为 `imageModel`。
+
+<a id="table-model"></a>
+
+#### 表格模型 `QueContentTableModel` / `EQTableModel`
+
+1. 通过 TFHpple 的 XPath `//table` 查找表格，取第一个表格节点进行解析。
+2. 遍历表头、表体和 `<tr>` 节点，再遍历各行的 `<td>`，生成行模型和单元格模型。
+3. 读取 `<td>` 的 `rowspan`、`colspan` 属性，转换为跨行、跨列数量；未提供时默认为 1。
+4. 取出单元格内部内容，用正则拆解 `<p>`、`<blk>` 和自闭合 `<blk .../>`，将普通文字转换为富文本、空位转换为带索引的作答片段，再拼接为单元格的 `resultAttributed`。
+5. 汇总行列数量与合并关系，确定单元格的逻辑位置，输出 `tableModel`。
+
+<a id="fill-blank-model"></a>
+
+#### 填空模型 `QueContentFillBlankModel`
+
+1. 用正则拆解 `<p>`、`<u>`、`<img>` 和 `<blk>`，将标签之间的普通文字转换为 `NSMutableAttributedString`。
+2. 取出 `<p>`、`<u>` 的内部内容递归解析，分别补充换行和下划线属性。
+3. 通过图片模型读取 `<img>` 的地址和尺寸，加载后转换为 `NSTextAttachment`，替换原位置的占位片段。
+4. 按 `<blk>` 的出现顺序分配空位索引，根据已有答案生成答案文字或空白占位，添加 `blank:索引` 链接与下划线属性。
+5. 将内容片段存入 `allAttrArr`，空位片段另外记录到 `fillBlankAttrArr`，最后拼接成 `resultAttributed`。
+
+<a id="select-fill-blank-model"></a>
+
+#### 选择填空模型 `QueContentSelectFillBlankModel`
+
+1. 继承填空模型，复用文字、段落、下划线、图片和空位的解析，生成 `resultAttributed`。
+2. 普通模式读取本题的 `options`，按答案数量为各空位关联公共选项；组合模式按子题顺序读取各自的 `options`。
+3. 生成与空位索引对应的选项数组，保存为 `options`。这些选项来自题目字段，不通过 HTML 标签解析。
+
+<a id="essay-option-models"></a>
+
+#### 作文模型 `QueContentEssayModel`
+
+1. `essayResolver` 拆解题面，将文字、图片、表格交给各自模型；识别到 `<blk>` 时创建 `QueContentEssayModel`。
+2. 将题目和对应答案索引 `index` 传入模型，建立作答位置与 `question.userAnswers` 的关联。
+3. 模型不继续解析 `<blk>` 内部 HTML，而是根据索引提供已有答案文本，供作文输入区使用。
+
+<a id="option-model"></a>
+
+#### 选项模型 `QueContentSelectOptionModel`
+
+1. 读取 `question.options`，没有选项或数组为空时不创建模型。
+2. 保存选项数组与所属题目，供选项单元展示。模型不解析 HTML 标签。
+
 ## 题型示例
 
 以下保留各题型的输入内容与展示截图，便于对照解析效果。
@@ -78,3 +204,37 @@ flowchart TD
 ```
 内容解析
 ![作文素材1](https://github.com/Howard-SSS/ExamQuestionType/blob/master/%E4%BD%9C%E6%96%87%E8%A7%A3%E6%9E%901.png?raw=true)
+
+## 补充说明
+
+### 1. TFHpple 是什么库
+
+TFHpple 是一个用于解析 HTML、XML 的 Objective-C 库，底层基于 `libxml2`，支持通过 XPath 查找节点。它将 HTML 内容转换为可访问的节点，方便读取标签名、属性、内部内容和子节点，本身不负责网页渲染。
+
+项目中的用途包括：
+
+- 通过 `//p` 查找段落，读取 `align` 等属性。
+- 通过 `//img` 查找图片，读取 `src`、`width`、`height`。
+- 通过 `//table` 查找表格，遍历行和单元格，读取 `rowspan`、`colspan` 等合并属性。
+
+例如，解析图片地址：
+
+```swift
+let parser = TFHpple(data: htmlData, isXML: false)
+let images = parser?.search(withXPathQuery: "//img") as? [TFHppleElement]
+
+for image in images ?? [] {
+    let src = image.object(forKey: "src")
+}
+```
+
+### 2. 表格如何做到跨行、跨列
+
+核心是用数组 `barrierArr` 记录每一列的占位情况，数值表示该列还被跨行单元格占用多少行。
+
+1. 按行遍历单元格，检查当前单元格需要占据的列范围是否存在阻碍。
+2. 如果存在阻碍，就向后移动候选列位置，继续检查，直到找到可以放下当前单元格的位置。
+3. 确定位置后，如果单元格跨行，就将它覆盖的各列在 `barrierArr` 中设为 `rowspan - 1`；跨列则决定需要更新多少列。
+4. 遍历后续行时，遇到已有阻碍会递减对应计数；计数归零后，该列恢复可用。
+
+这样，后续单元格会避开已有的合并区域，新的跨行、跨列单元格又会补充占位记录，从而确定各单元格的位置。
