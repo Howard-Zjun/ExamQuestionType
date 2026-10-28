@@ -17,6 +17,12 @@ class QueContentEssayModel: NSObject, QueContentModel {
     
     var estimatedHeight: CGFloat?
     
+    var estimateContentHeight: CGFloat {
+        getAnswer().textHeight(textWidth: kScreenWidth - contentInset.left - contentInset.right, font: font)
+    }
+    
+    var font: UIFont { .systemFont(ofSize: 14) }
+    
     let question: QuestionNode
     
     let index: Int

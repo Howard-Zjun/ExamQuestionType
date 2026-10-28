@@ -23,6 +23,10 @@ class QueContentFillBlankModel: NSObject, QueContentModel {
     
     var estimatedHeight: CGFloat?
 
+    var estimateContentHeight: CGFloat {
+        resultAttributed.textHeight(textWidth: kScreenWidth - contentInset.left - contentInset.right)
+    }
+    
     let question: QuestionNode
     
     var fillBlankAttrArr: [NSMutableAttributedString]

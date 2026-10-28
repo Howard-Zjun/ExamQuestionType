@@ -17,10 +17,22 @@ class QueContentDescribeModel: NSObject, QueContentModel {
     
     var estimatedHeight: CGFloat?
     
-    let handleContentAttr: NSMutableAttributedString
+    var estimateContentHeight: CGFloat {
+        _handleContentAttr.textHeight(textWidth: kScreenWidth - contentInset.left - contentInset.right, withFont: font)
+    }
+    
+    var font: UIFont {
+        .systemFont(ofSize: 17)
+    }
+    
+    var handleContentAttr: NSAttributedString {
+        _handleContentAttr
+    }
+    
+    private let _handleContentAttr: NSMutableAttributedString
     
     init(attr: NSMutableAttributedString) {
-        self.handleContentAttr = attr
+        self._handleContentAttr = attr
     }
     
     convenience init?(html: String, fontSize: CGFloat = 18, baselineOffset: Int = 5, needStyle: Bool = true) {
@@ -77,7 +89,7 @@ class QueContentDescribeModel: NSObject, QueContentModel {
         paragraphStyle.lineSpacing = 5
         paragraphStyle.paragraphSpacing = 5
         paragraphStyle.alignment = textAlignment
-        handleContentAttr.addAttribute(.paragraphStyle, value: paragraphStyle, range: .init(location: 0, length: handleContentAttr.length))
+        _handleContentAttr.addAttribute(.paragraphStyle, value: paragraphStyle, range: .init(location: 0, length: handleContentAttr.length))
         
     }
 }

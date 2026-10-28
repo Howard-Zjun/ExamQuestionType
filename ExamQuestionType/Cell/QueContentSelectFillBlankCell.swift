@@ -1,58 +1,72 @@
 import UIKit
+import SnapKit
 
 class QueContentSelectFillBlankCell: UITableViewCell {
     
     var contentSizeBeginChange: (() -> Void)?
-    
     var contentSizeDidChange: (() -> Void)?
 
     var actionDidChange: ((Int) -> Void)?
     
-    @IBOutlet weak var textViewHeight: NSLayoutConstraint!
+    private var textViewHeight: CGFloat = 150
     
-    @IBOutlet weak var textViewTop: NSLayoutConstraint!
-    
-    @IBOutlet weak var textViewBottom: NSLayoutConstraint!
-    
-    @IBOutlet weak var textViewLeft: NSLayoutConstraint!
-    
-    @IBOutlet weak var textViewRight: NSLayoutConstraint!
-    
-    var observation: NSKeyValueObservation?
+    private var observation: NSKeyValueObservation?
 
     var model: QueContentSelectFillBlankModel! {
         didSet {
             model.delegate = self
             
-            textViewTop.constant = model.contentInset.top
-            textViewBottom.constant = model.contentInset.bottom
-            textViewLeft.constant = model.contentInset.left
-            textViewRight.constant = model.contentInset.right
-            
             textView.attributedText = model.resultAttributed
-            if let estimatedHeight = model.estimatedHeight {
-                textViewHeight.constant = estimatedHeight
-            } else {
-                textViewHeight.constant = textView.contentSize.height
+            textViewHeight = model.estimatedHeight ?? textView.contentSize.height
+            textView.snp.updateConstraints { make in
+                make.top.equalToSuperview().inset(model.contentInset.top)
+                make.bottom.equalToSuperview().inset(model.contentInset.bottom)
+                make.leading.equalToSuperview().inset(model.contentInset.left)
+                make.trailing.equalToSuperview().inset(model.contentInset.right)
+                make.height.equalTo(textViewHeight)
             }
         }
     }
     
     // MARK: - view
-    @IBOutlet weak var textView: DisRangeAbleTextView! {
-        didSet {
-            textView.font = .systemFont(ofSize: 18)
-            textView.delegate = self
-            textView.isEditable = false
-            textView.linkTextAttributes = .init()
-            
-            observation = textView.observe(\.contentSize, options: .new) { [weak self] textView, change in
-                guard let self = self else { return }
-                print("\(NSStringFromClass(Self.self)) \(#function): 变化高度\(textView.contentSize)")
-                
-                NSObject.cancelPreviousPerformRequests(withTarget: self)
-                perform(#selector(responseSize), with: nil, afterDelay: 0.1)
-            }
+    private lazy var textView: DisRangeAbleTextView = {
+        let textView = DisRangeAbleTextView()
+        textView.backgroundColor = .systemBackground
+        textView.textColor = .label
+        textView.autocapitalizationType = .sentences
+        textView.font = .systemFont(ofSize: 18)
+        textView.delegate = self
+        textView.isEditable = false
+        textView.linkTextAttributes = .init()
+        return textView
+    }()
+
+    // MARK: - init
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupView()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupView()
+    }
+
+    private func setupView() {
+        contentView.clipsToBounds = true
+        contentView.contentMode = .center
+        contentView.isMultipleTouchEnabled = true
+        contentView.addSubview(textView)
+        textView.snp.makeConstraints { make in
+            make.top.bottom.leading.trailing.equalToSuperview()
+            make.height.equalTo(textViewHeight)
+        }
+        observation = textView.observe(\.contentSize, options: .new) { [weak self] textView, change in
+            guard let self = self else { return }
+            print("\(NSStringFromClass(Self.self)) \(#function): 变化高度\(textView.contentSize)")
+
+            NSObject.cancelPreviousPerformRequests(withTarget: self)
+            self.perform(#selector(responseSize), with: nil, afterDelay: 0.1)
         }
     }
     
@@ -62,12 +76,16 @@ class QueContentSelectFillBlankCell: UITableViewCell {
     
     // MARK: - target
     @objc func responseSize() {
+        guard let model = model else { return }
         model.estimatedHeight = textView.contentSize.height
         
-        if textViewHeight.constant != textView.contentSize.height {
+        if textViewHeight != textView.contentSize.height {
             contentSizeBeginChange?()
             
-            textViewHeight.constant = textView.contentSize.height
+            textViewHeight = textView.contentSize.height
+            textView.snp.updateConstraints { make in
+                make.height.equalTo(textViewHeight)
+            }
             
             contentSizeDidChange?()
         }

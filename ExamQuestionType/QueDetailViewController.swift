@@ -217,7 +217,7 @@ class QueDetailViewController: UIViewController {
             if let fillBlankModel = model as? QueContentFillBlankModel {
                 fillBlankModel.focunsIndex = nil
                 let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentFillBlankCell
-                cell?.textView.resignFirstResponder()
+                cell?.endEditing(true)
             } else if let tableFillBlankModel = model as? QueContentTableModel {
                 let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentTableCell
 
@@ -261,12 +261,6 @@ extension QueDetailViewController: UITableViewDelegate, UITableViewDataSource {
         } else if let describeModel = model as? QueContentDescribeModel {
             let cell = tableView.dequeueReusableCell(QueContentDescribeCell.self, indexPath: indexPath)
             cell.model = describeModel
-            cell.contentSizeWillChange = {
-                tableView.beginUpdates()
-            }
-            cell.contentSizeDidChange = {
-                tableView.endUpdates()
-            }
             cell.selectionStyle = .none
             return cell
         } else if let essayModel = model as? QueContentEssayModel {
