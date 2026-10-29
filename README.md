@@ -13,7 +13,7 @@
 
 - [QuestionCategory](ExamQuestionType/QuestionCategory.swift)：题型分类模型，保存分类名称、说明与题目集合，并提供本地示例数据。
 - [QuestionNode](ExamQuestionType/QuestionNode.swift)：题目节点，保存题干、题型、选项、答案及子题，并按题型调用解析器生成内容模型。
-- [QueContentResolver](ExamQuestionType/Model/QueContentModel.swift)：题面解析器，拆解富文本中的段落、图片、表格与作答标记，生成对应内容模型，并合并相邻的描述文本。
+- [QueContentResolver](ExamQuestionType/Model/QueContentResolver.swift)：题面解析器，拆解富文本中的段落、图片、表格与作答标记，生成对应内容模型，并合并相邻的描述文本。
 - [QueContentFillBlankModel](ExamQuestionType/Model/QueContentFillBlankModel.swift)：填空内容模型，将空位转换为可点击的富文本片段，管理焦点、答案索引、答案回写与结果展示；选择填空模型继承并复用其能力。
 - [EQTableModel](ExamQuestionType/Model/QueContentTableModel.swift)：表格结构与布局模型，解析行列及跨行、跨列关系，计算单元格位置和尺寸，供表格组件展示。
 - [QueContentTableCell](ExamQuestionType/Cell/QueContentTableCell.swift)：原生表格组件，使用集合视图展示单元格，协调表格内填空交互和内容变化后的高度更新。
@@ -40,7 +40,9 @@ flowchart TD
 
 ## 解析是怎么做的
 
-项目的解析过程可以概括为：**正则匹配 → 递归拆解 → 按单元类型解析内容与属性 → 生成模型**。各步骤在解析过程中穿插执行，并不是先拆完所有标签再统一创建模型。
+普通题面、选择题面的题干和作文题面已改用 `HTMLDocument`：通过 libxml2 建立节点树，按子节点顺序递归遍历，保留文本与元素的交错关系。图片属性直接从节点读取，表格内部仍沿用现有表格模型解析，文字节点直接生成富文本，按所在行内标签设置样式，避免重新解析造成空白丢失；`<u>` 仅为已有文字设置下划线，空标签不生成占位内容。
+
+其余尚未迁移的解析路径可以概括为：**正则匹配 → 递归拆解 → 按单元类型解析内容与属性 → 生成模型**。各步骤在解析过程中穿插执行，并不是先拆完所有标签再统一创建模型。
 
 1. **正则匹配**：根据题型选择表达式，使用 `.*?` 非贪婪匹配识别段落、图片、表格和作答标记等内容块，同时保留标签之间的普通文字与原文顺序。
 2. **递归拆解**：对段落等需要继续拆解的内容取出内部 HTML，递归识别其中的标签，逐步拆成可交给对应解析逻辑处理的内容单元；表格则交给专门的节点解析逻辑继续拆分。
@@ -51,13 +53,11 @@ flowchart TD
 
 #### 普通题面和选择题面
 
-```regex
-(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)
-```
+此入口已不再使用正则拆解，改为遍历 `HTMLDocument` 的节点类型及标签名，再按以下关系生成模型。`<br>` 转为换行，行内样式通过递归参数传递并保留。
 
 - `<table>` → [表格模型 QueContentTableModel](#table-model)。
 - `<img>` → [图片模型 QueContentImgModel](#image-model)。
-- `<p>` → 递归拆解内部内容，文字生成[描述模型 QueContentDescribeModel](#describe-model)。
+- `<p>` → 遍历内部节点，文字生成[描述模型 QueContentDescribeModel](#describe-model)。
 - `<blk>` → 转为 `____` 占位，归入[描述模型](#describe-model)。
 - 选择题的 `options` 字段 → [选项模型 QueContentSelectOptionModel](#option-model)。
 
@@ -90,13 +90,11 @@ flowchart TD
 
 #### 作文题面
 
-```regex
-(<table.*?</table>)|(<img.*?>)|(<blk.*?</blk>)|(<p.*?</p>)
-```
+此入口已改为通过 `HTMLDocument` 遍历节点，与普通题面共用拆解逻辑；每遇到一个 `<blk>` 就从 `essayOffset` 起连续分配答案索引。段落与嵌套容器共用同一个索引计数。
 
 - `<table>` → [表格模型 QueContentTableModel](#table-model)。
 - `<img>` → [图片模型 QueContentImgModel](#image-model)。
-- `<p>` → 递归拆解内部内容，文字生成[描述模型 QueContentDescribeModel](#describe-model)。
+- `<p>` → 遍历内部节点，文字生成[描述模型 QueContentDescribeModel](#describe-model)。
 - `<blk>` → [作文模型 QueContentEssayModel](#essay-option-models)，展示作文输入区。
 
 ### 模型解析网页元素
@@ -106,6 +104,8 @@ flowchart TD
 <a id="describe-model"></a>
 
 #### 描述模型 `QueContentDescribeModel`
+
+普通题面和作文的节点解析路径直接调用 `init(attr:)` 接收已转换的富文本；以下步骤用于仍接收 HTML 的 `init(html:)` 入口。
 
 1. 通过 TFHpple 的 XPath `//p` 查找段落节点。
 2. 取出各段内容，转换成 `NSMutableAttributedString`，设置段落对齐等属性，按顺序添加换行并拼接；没有段落节点时，直接处理传入内容。

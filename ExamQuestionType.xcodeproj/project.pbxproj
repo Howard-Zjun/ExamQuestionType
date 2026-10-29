@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A62910300000000000000001 /* QueContentResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62910300000000000000002 /* QueContentResolver.swift */; };
 		392C59612C248CDB004FA0B1 /* QueContentDescribeCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C59452C248CDB004FA0B1 /* QueContentDescribeCell.swift */; };
 		392C59632C248CDB004FA0B1 /* QueContentEssayCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C59472C248CDB004FA0B1 /* QueContentEssayCell.swift */; };
 		392C59652C248CDB004FA0B1 /* QueContentFillBlankCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C59492C248CDB004FA0B1 /* QueContentFillBlankCell.swift */; };
@@ -50,9 +51,11 @@
 		3978D8033090F44F00CFFD02 /* UITableView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3978D8023090F44F00CFFD02 /* UITableView+Extension.swift */; };
 		3978D8053090F46B00CFFD02 /* UICollectionView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3978D8043090F46B00CFFD02 /* UICollectionView+Extension.swift */; };
 		43F559DB471844C201059544 /* Pods_ExamQuestionType.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 725A4BE1FC83902F33878E2F /* Pods_ExamQuestionType.framework */; };
+		A62810280000000000000011 /* HTMLDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62810280000000000000012 /* HTMLDocument.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A62910300000000000000002 /* QueContentResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentResolver.swift; sourceTree = "<group>"; };
 		2304F5E7ACACAD785D78BD4E /* Pods-ExamQuestionType.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ExamQuestionType.debug.xcconfig"; path = "Target Support Files/Pods-ExamQuestionType/Pods-ExamQuestionType.debug.xcconfig"; sourceTree = "<group>"; };
 		392C59452C248CDB004FA0B1 /* QueContentDescribeCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueContentDescribeCell.swift; sourceTree = "<group>"; };
 		392C59472C248CDB004FA0B1 /* QueContentEssayCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueContentEssayCell.swift; sourceTree = "<group>"; };
@@ -103,6 +106,7 @@
 		3978D8023090F44F00CFFD02 /* UITableView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UITableView+Extension.swift"; sourceTree = "<group>"; };
 		3978D8043090F46B00CFFD02 /* UICollectionView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UICollectionView+Extension.swift"; sourceTree = "<group>"; };
 		725A4BE1FC83902F33878E2F /* Pods_ExamQuestionType.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ExamQuestionType.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A62810280000000000000012 /* HTMLDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLDocument.swift; sourceTree = "<group>"; };
 		FD3F75EAAAB38440DD2303BD /* Pods-ExamQuestionType.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ExamQuestionType.release.xcconfig"; path = "Target Support Files/Pods-ExamQuestionType/Pods-ExamQuestionType.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -152,6 +156,7 @@
 				392C59552C248CDB004FA0B1 /* QueContentFillBlankModel.swift */,
 				392C59562C248CDB004FA0B1 /* QueContentImgModel.swift */,
 				392C59572C248CDB004FA0B1 /* QueContentModel.swift */,
+				A62910300000000000000002 /* QueContentResolver.swift */,
 				392C59592C248CDB004FA0B1 /* QueContentSelectFillBlankModel.swift */,
 				392C595A2C248CDB004FA0B1 /* QueContentTableModel.swift */,
 				392C595B2C248CDB004FA0B1 /* QueContentTitleModel.swift */,
@@ -189,6 +194,7 @@
 				3961E0B82C16F4C6009F13C4 /* AppDelegate.swift */,
 				3961E10A2C16F4C6009F13C4 /* SceneDelegate.swift */,
 				3961E0BC2C16F4C6009F13C4 /* HomeViewController.swift */,
+				A62810280000000000000012 /* HTMLDocument.swift */,
 				3933FD012C31299900B4744F /* QueDetailViewController.swift */,
 				392FF8522C427AF60050C381 /* FillBlankViewController.swift */,
 				392C59792C248E35004FA0B1 /* QuestionCategory.swift */,
@@ -361,6 +367,7 @@
 			files = (
 				392C59742C248CDB004FA0B1 /* QueContentSelectFillBlankModel.swift in Sources */,
 				3961E0BD2C16F4C6009F13C4 /* HomeViewController.swift in Sources */,
+				A62810280000000000000011 /* HTMLDocument.swift in Sources */,
 				39528A9D2C27F6FC005AEA5A /* Tool.swift in Sources */,
 				392FF8552C427E440050C381 /* SelectFillBlankOptionCell.swift in Sources */,
 				3961E1082C16FF64009F13C4 /* TFHppleElement.m in Sources */,
@@ -370,6 +377,7 @@
 				3978D7FB3090F3CA00CFFD02 /* String+Extension.swift in Sources */,
 				3961E1092C16FF64009F13C4 /* XPathQuery.m in Sources */,
 				392C59722C248CDB004FA0B1 /* QueContentModel.swift in Sources */,
+				A62910300000000000000001 /* QueContentResolver.swift in Sources */,
 				3946C4602C3C49C800AF7DBA /* QueContentSelectOptionModel.swift in Sources */,
 				3961E1072C16FF64009F13C4 /* TFHpple.m in Sources */,
 				392C596C2C248CDB004FA0B1 /* QueContentVideoCell.swift in Sources */,
