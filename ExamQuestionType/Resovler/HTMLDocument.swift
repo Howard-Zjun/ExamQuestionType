@@ -1,7 +1,7 @@
 import Foundation
 import libxml2
 
-/// Owns a libxml2 HTML document. No business models or display attributes are generated.
+/// 管理 libxml2 HTML 文档，仅提供节点解析与访问，不生成业务模型或展示属性。
 final class HTMLDocument {
 
     enum ParseError: Error {
@@ -12,13 +12,20 @@ final class HTMLDocument {
 
     private let storage: HTMLDocumentStorage
 
-    /// libxml2 may insert html/body nodes and normalize malformed HTML.
     init(html: String) throws {
         guard !html.isEmpty else { throw ParseError.emptyInput }
         let bytes = Array(html.utf8CString)
         guard bytes.count - 1 <= Int(Int32.max) else { throw ParseError.inputTooLarge }
-        let options = HTML_PARSE_RECOVER.rawValue | HTML_PARSE_NONET.rawValue
-            | HTML_PARSE_NOERROR.rawValue | HTML_PARSE_NOWARNING.rawValue
+        let options = HTML_PARSE_RECOVER.rawValue // 尝试从不规范的 HTML 中恢复，尽可能生成节点树；不保证还原原意。
+        // HTML_PARSE_NODEFDTD：文档缺少 DOCTYPE 时，不自动补充默认的文档类型声明。
+        // HTML_PARSE_PEDANTIC：启用更严格、细致的解析错误报告，不代表改用严格的 XML 解析规则。
+        // HTML_PARSE_NOBLANKS：移除解析器判断为可忽略的空白文本节点；可能影响标签之间的空格，因此这里保留空白。
+        // HTML_PARSE_NOIMPLIED：不自动补充隐含的 html、head、body 等元素。
+        // HTML_PARSE_COMPACT：紧凑存储较短的文本节点，减少内存开销。
+        // HTML_PARSE_IGNORE_ENC：忽略 HTML 文档内部的编码提示，例如 meta 中的编码声明。
+            | HTML_PARSE_NONET.rawValue // 禁止解析器通过网络加载外部资源。
+            | HTML_PARSE_NOERROR.rawValue // 不输出解析错误信息；解析失败仍通过下方的空指针检查处理。
+            | HTML_PARSE_NOWARNING.rawValue // 不输出解析警告信息。
         let document = bytes.withUnsafeBufferPointer { buffer in
             htmlReadMemory(buffer.baseAddress, Int32(bytes.count - 1), nil, "UTF-8", Int32(options))
         }
@@ -35,7 +42,7 @@ final class HTMLDocument {
         firstElement(named: "body")
     }
 
-    /// Searches in document order, including the root element.
+    /// 按文档顺序查找首个指定名称的元素，查找范围包含根元素。
     func firstElement(named name: String) -> HTMLNode? {
         guard let root = root else { return nil }
         let name = name.lowercased()
@@ -48,30 +55,18 @@ final class HTMLDocument {
         }
         return nil
     }
-
-    /// Borrowed, read-only access. Do not free, mutate, or retain the pointer beyond this closure.
-    func withUnsafeDocument<Result>(_ body: (xmlDocPtr) throws -> Result) rethrows -> Result {
-        try withExtendedLifetime(storage) {
-            try body(storage.document)
-        }
-    }
 }
 
 /// 对 libxml2 原生节点的封装，持有文档资源以保证节点指针有效。
 final class HTMLNode {
 
-    /// 节点类型，用于区分元素、文本、CDATA、注释及其他节点。
+    /// 节点类型
     enum Kind {
-        /// 元素节点，例如 p、img、blk。
-        case element
-        /// 普通文本节点，包括仅含空格或换行的文本。
-        case text
-        /// CDATA 文本节点。
-        case cdata
-        /// 注释节点。
-        case comment
-        /// 其他 libxml2 节点类型。
-        case other
+        case element /// 元素节点，例如 p、img、blk。
+        case text /// 普通文本节点，包括仅含空格或换行的文本。
+        case cdata /// CDATA 文本节点。
+        case comment /// 注释节点。
+        case other /// 其他 libxml2 节点类型。
     }
 
     /// 当前节点的原生指针，由所属文档统一管理内存。
@@ -126,12 +121,6 @@ final class HTMLNode {
         return HTMLNode(node: parent, storage: storage)
     }
 
-    /// 同一父节点下的下一个兄弟节点，可能是元素、文本或注释；不存在时返回 nil。
-    var nextSibling: HTMLNode? {
-        guard let next = node.pointee.next else { return nil }
-        return HTMLNode(node: next, storage: storage)
-    }
-
     /// 仅返回文本或 CDATA 节点的文字，其他类型返回 nil。
     /// 内容由 libxml2 解码，不裁剪空白，也不转换富文本样式。
     var text: String? {
@@ -177,30 +166,29 @@ final class HTMLNode {
         return String(cString: content)
     }
 
-    /// Preorder traversal including self. Uses a stack to avoid Swift recursion for deep trees.
-    func walk(_ visit: (HTMLNode) throws -> Void) rethrows {
-        var pending = [self]
-        while let current = pending.popLast() {
-            try visit(current)
-            pending.append(contentsOf: current.children.reversed())
-        }
-    }
-
-    /// Borrowed, read-only access. Do not free, mutate, or retain the pointer beyond this closure.
-    func withUnsafeNode<Result>(_ body: (xmlNodePtr) throws -> Result) rethrows -> Result {
-        try withExtendedLifetime(storage) {
-            try body(node)
-        }
-    }
-
     private func readAndFree(_ value: UnsafeMutablePointer<xmlChar>?) -> String? {
         guard let value = value else { return nil }
         defer { xmlFree(value) }
         return String(cString: value)
     }
+
+    /// 按文档顺序返回当前节点及其后代中匹配标签名的所有元素，标签名不区分大小写。
+    func allMatchNode(tagName: String) -> [HTMLNode] {
+        guard !tagName.isEmpty else { return [] }
+        let tagName = tagName.lowercased()
+        var pending = [self]
+        var matches: [HTMLNode] = []
+        while let current = pending.popLast() {
+            if current.kind == .element && current.name == tagName {
+                matches.append(current)
+            }
+            pending.append(contentsOf: current.children.reversed())
+        }
+        return matches
+    }
 }
 
-/// Nodes retain storage, but storage never retains wrappers, so there is no ownership cycle.
+/// 节点持有文档资源，资源不反向持有节点封装，避免循环引用。
 fileprivate final class HTMLDocumentStorage {
     let document: xmlDocPtr
 

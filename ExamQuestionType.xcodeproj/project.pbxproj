@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A62910300000000000000001 /* QueContentResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62910300000000000000002 /* QueContentResolver.swift */; };
 		392C59612C248CDB004FA0B1 /* QueContentDescribeCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C59452C248CDB004FA0B1 /* QueContentDescribeCell.swift */; };
 		392C59632C248CDB004FA0B1 /* QueContentEssayCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C59472C248CDB004FA0B1 /* QueContentEssayCell.swift */; };
 		392C59652C248CDB004FA0B1 /* QueContentFillBlankCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C59492C248CDB004FA0B1 /* QueContentFillBlankCell.swift */; };
@@ -28,8 +27,6 @@
 		392C59782C248CDB004FA0B1 /* QueContentVoiceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C595D2C248CDB004FA0B1 /* QueContentVoiceModel.swift */; };
 		392C597A2C248E35004FA0B1 /* QuestionCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C59792C248E35004FA0B1 /* QuestionCategory.swift */; };
 		392C597C2C248E3C004FA0B1 /* QuestionNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392C597B2C248E3C004FA0B1 /* QuestionNode.swift */; };
-		392FF8532C427AF60050C381 /* FillBlankViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392FF8522C427AF60050C381 /* FillBlankViewController.swift */; };
-		392FF8552C427E440050C381 /* SelectFillBlankOptionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392FF8542C427E440050C381 /* SelectFillBlankOptionCell.swift */; };
 		3933FD022C31299900B4744F /* QueDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3933FD012C31299900B4744F /* QueDetailViewController.swift */; };
 		3933FD062C3199A100B4744F /* QueContentSelectFillBlankCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3933FD032C3199A100B4744F /* QueContentSelectFillBlankCell.swift */; };
 		3946C4602C3C49C800AF7DBA /* QueContentSelectOptionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3946C45F2C3C49C800AF7DBA /* QueContentSelectOptionModel.swift */; };
@@ -40,9 +37,6 @@
 		3961E0C02C16F4C6009F13C4 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 3961E0BF2C16F4C6009F13C4 /* Base */; };
 		3961E0C22C16F4C8009F13C4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3961E0C12C16F4C8009F13C4 /* Assets.xcassets */; };
 		3961E0C52C16F4C8009F13C4 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 3961E0C42C16F4C8009F13C4 /* Base */; };
-		3961E1072C16FF64009F13C4 /* TFHpple.m in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1012C16FF64009F13C4 /* TFHpple.m */; };
-		3961E1082C16FF64009F13C4 /* TFHppleElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1022C16FF64009F13C4 /* TFHppleElement.m */; };
-		3961E1092C16FF64009F13C4 /* XPathQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = 3961E1052C16FF64009F13C4 /* XPathQuery.m */; };
 		3961E10B2C16F4C6009F13C4 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3961E10A2C16F4C6009F13C4 /* SceneDelegate.swift */; };
 		3978D7FB3090F3CA00CFFD02 /* String+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3978D7FA3090F3CA00CFFD02 /* String+Extension.swift */; };
 		3978D7FD3090F3EB00CFFD02 /* UIView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3978D7FC3090F3EB00CFFD02 /* UIView+Extension.swift */; };
@@ -50,12 +44,13 @@
 		3978D8013090F43900CFFD02 /* NSMutableAttributedString+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3978D8003090F43900CFFD02 /* NSMutableAttributedString+Extension.swift */; };
 		3978D8033090F44F00CFFD02 /* UITableView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3978D8023090F44F00CFFD02 /* UITableView+Extension.swift */; };
 		3978D8053090F46B00CFFD02 /* UICollectionView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3978D8043090F46B00CFFD02 /* UICollectionView+Extension.swift */; };
+		3978D80D3093B0E500CFFD02 /* SelectFillBlankOptionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3978D80C3093B0E500CFFD02 /* SelectFillBlankOptionCell.swift */; };
 		43F559DB471844C201059544 /* Pods_ExamQuestionType.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 725A4BE1FC83902F33878E2F /* Pods_ExamQuestionType.framework */; };
 		A62810280000000000000011 /* HTMLDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62810280000000000000012 /* HTMLDocument.swift */; };
+		A62910300000000000000001 /* QueContentResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62910300000000000000002 /* QueContentResolver.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A62910300000000000000002 /* QueContentResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentResolver.swift; sourceTree = "<group>"; };
 		2304F5E7ACACAD785D78BD4E /* Pods-ExamQuestionType.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ExamQuestionType.debug.xcconfig"; path = "Target Support Files/Pods-ExamQuestionType/Pods-ExamQuestionType.debug.xcconfig"; sourceTree = "<group>"; };
 		392C59452C248CDB004FA0B1 /* QueContentDescribeCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueContentDescribeCell.swift; sourceTree = "<group>"; };
 		392C59472C248CDB004FA0B1 /* QueContentEssayCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueContentEssayCell.swift; sourceTree = "<group>"; };
@@ -77,8 +72,6 @@
 		392C595D2C248CDB004FA0B1 /* QueContentVoiceModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueContentVoiceModel.swift; sourceTree = "<group>"; };
 		392C59792C248E35004FA0B1 /* QuestionCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionCategory.swift; sourceTree = "<group>"; };
 		392C597B2C248E3C004FA0B1 /* QuestionNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionNode.swift; sourceTree = "<group>"; };
-		392FF8522C427AF60050C381 /* FillBlankViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillBlankViewController.swift; sourceTree = "<group>"; };
-		392FF8542C427E440050C381 /* SelectFillBlankOptionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectFillBlankOptionCell.swift; sourceTree = "<group>"; };
 		3933FD012C31299900B4744F /* QueDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueDetailViewController.swift; sourceTree = "<group>"; };
 		3933FD032C3199A100B4744F /* QueContentSelectFillBlankCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentSelectFillBlankCell.swift; sourceTree = "<group>"; };
 		3946C45F2C3C49C800AF7DBA /* QueContentSelectOptionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentSelectOptionModel.swift; sourceTree = "<group>"; };
@@ -92,12 +85,6 @@
 		3961E0C42C16F4C8009F13C4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		3961E0C62C16F4C8009F13C4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3961E1002C16FF64009F13C4 /* ExamQuestionType-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ExamQuestionType-Bridging-Header.h"; sourceTree = "<group>"; };
-		3961E1012C16FF64009F13C4 /* TFHpple.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TFHpple.m; sourceTree = "<group>"; };
-		3961E1022C16FF64009F13C4 /* TFHppleElement.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TFHppleElement.m; sourceTree = "<group>"; };
-		3961E1032C16FF64009F13C4 /* XPathQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XPathQuery.h; sourceTree = "<group>"; };
-		3961E1042C16FF64009F13C4 /* TFHppleElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TFHppleElement.h; sourceTree = "<group>"; };
-		3961E1052C16FF64009F13C4 /* XPathQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XPathQuery.m; sourceTree = "<group>"; };
-		3961E1062C16FF64009F13C4 /* TFHpple.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TFHpple.h; sourceTree = "<group>"; };
 		3961E10A2C16F4C6009F13C4 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		3978D7FA3090F3CA00CFFD02 /* String+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extension.swift"; sourceTree = "<group>"; };
 		3978D7FC3090F3EB00CFFD02 /* UIView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extension.swift"; sourceTree = "<group>"; };
@@ -105,8 +92,10 @@
 		3978D8003090F43900CFFD02 /* NSMutableAttributedString+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSMutableAttributedString+Extension.swift"; sourceTree = "<group>"; };
 		3978D8023090F44F00CFFD02 /* UITableView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UITableView+Extension.swift"; sourceTree = "<group>"; };
 		3978D8043090F46B00CFFD02 /* UICollectionView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UICollectionView+Extension.swift"; sourceTree = "<group>"; };
+		3978D80C3093B0E500CFFD02 /* SelectFillBlankOptionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectFillBlankOptionCell.swift; sourceTree = "<group>"; };
 		725A4BE1FC83902F33878E2F /* Pods_ExamQuestionType.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ExamQuestionType.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A62810280000000000000012 /* HTMLDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLDocument.swift; sourceTree = "<group>"; };
+		A62910300000000000000002 /* QueContentResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueContentResolver.swift; sourceTree = "<group>"; };
 		FD3F75EAAAB38440DD2303BD /* Pods-ExamQuestionType.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ExamQuestionType.release.xcconfig"; path = "Target Support Files/Pods-ExamQuestionType/Pods-ExamQuestionType.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -156,7 +145,6 @@
 				392C59552C248CDB004FA0B1 /* QueContentFillBlankModel.swift */,
 				392C59562C248CDB004FA0B1 /* QueContentImgModel.swift */,
 				392C59572C248CDB004FA0B1 /* QueContentModel.swift */,
-				A62910300000000000000002 /* QueContentResolver.swift */,
 				392C59592C248CDB004FA0B1 /* QueContentSelectFillBlankModel.swift */,
 				392C595A2C248CDB004FA0B1 /* QueContentTableModel.swift */,
 				392C595B2C248CDB004FA0B1 /* QueContentTitleModel.swift */,
@@ -190,38 +178,22 @@
 			children = (
 				392C59522C248CDB004FA0B1 /* Cell */,
 				392C595E2C248CDB004FA0B1 /* Model */,
-				3961E0FF2C16FF59009F13C4 /* Hpple */,
+				3978D8083093B00E00CFFD02 /* Home */,
+				3978D7F93090F3B500CFFD02 /* Extension */,
 				3961E0B82C16F4C6009F13C4 /* AppDelegate.swift */,
+				3978D8093093B05700CFFD02 /* Resovler */,
 				3961E10A2C16F4C6009F13C4 /* SceneDelegate.swift */,
-				3961E0BC2C16F4C6009F13C4 /* HomeViewController.swift */,
-				A62810280000000000000012 /* HTMLDocument.swift */,
-				3933FD012C31299900B4744F /* QueDetailViewController.swift */,
-				392FF8522C427AF60050C381 /* FillBlankViewController.swift */,
 				392C59792C248E35004FA0B1 /* QuestionCategory.swift */,
 				392C597B2C248E3C004FA0B1 /* QuestionNode.swift */,
-				392FF8542C427E440050C381 /* SelectFillBlankOptionCell.swift */,
+				3978D80C3093B0E500CFFD02 /* SelectFillBlankOptionCell.swift */,
 				3961E0BE2C16F4C6009F13C4 /* Main.storyboard */,
 				3961E0C12C16F4C8009F13C4 /* Assets.xcassets */,
 				3961E0C32C16F4C8009F13C4 /* LaunchScreen.storyboard */,
 				3961E0C62C16F4C8009F13C4 /* Info.plist */,
 				3961E1002C16FF64009F13C4 /* ExamQuestionType-Bridging-Header.h */,
 				39528A9C2C27F6FC005AEA5A /* Tool.swift */,
-				3978D7F93090F3B500CFFD02 /* Extension */,
 			);
 			path = ExamQuestionType;
-			sourceTree = "<group>";
-		};
-		3961E0FF2C16FF59009F13C4 /* Hpple */ = {
-			isa = PBXGroup;
-			children = (
-				3961E1062C16FF64009F13C4 /* TFHpple.h */,
-				3961E1012C16FF64009F13C4 /* TFHpple.m */,
-				3961E1042C16FF64009F13C4 /* TFHppleElement.h */,
-				3961E1022C16FF64009F13C4 /* TFHppleElement.m */,
-				3961E1032C16FF64009F13C4 /* XPathQuery.h */,
-				3961E1052C16FF64009F13C4 /* XPathQuery.m */,
-			);
-			path = Hpple;
 			sourceTree = "<group>";
 		};
 		3961E10A2C1702E6009F13C4 /* Frameworks */ = {
@@ -243,6 +215,24 @@
 				3978D8043090F46B00CFFD02 /* UICollectionView+Extension.swift */,
 			);
 			path = Extension;
+			sourceTree = "<group>";
+		};
+		3978D8083093B00E00CFFD02 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				3961E0BC2C16F4C6009F13C4 /* HomeViewController.swift */,
+				3933FD012C31299900B4744F /* QueDetailViewController.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		3978D8093093B05700CFFD02 /* Resovler */ = {
+			isa = PBXGroup;
+			children = (
+				A62910300000000000000002 /* QueContentResolver.swift */,
+				A62810280000000000000012 /* HTMLDocument.swift */,
+			);
+			path = Resovler;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -369,17 +359,12 @@
 				3961E0BD2C16F4C6009F13C4 /* HomeViewController.swift in Sources */,
 				A62810280000000000000011 /* HTMLDocument.swift in Sources */,
 				39528A9D2C27F6FC005AEA5A /* Tool.swift in Sources */,
-				392FF8552C427E440050C381 /* SelectFillBlankOptionCell.swift in Sources */,
-				3961E1082C16FF64009F13C4 /* TFHppleElement.m in Sources */,
 				392C59612C248CDB004FA0B1 /* QueContentDescribeCell.swift in Sources */,
 				392C59672C248CDB004FA0B1 /* QueContentImgCell.swift in Sources */,
-				392FF8532C427AF60050C381 /* FillBlankViewController.swift in Sources */,
 				3978D7FB3090F3CA00CFFD02 /* String+Extension.swift in Sources */,
-				3961E1092C16FF64009F13C4 /* XPathQuery.m in Sources */,
 				392C59722C248CDB004FA0B1 /* QueContentModel.swift in Sources */,
 				A62910300000000000000001 /* QueContentResolver.swift in Sources */,
 				3946C4602C3C49C800AF7DBA /* QueContentSelectOptionModel.swift in Sources */,
-				3961E1072C16FF64009F13C4 /* TFHpple.m in Sources */,
 				392C596C2C248CDB004FA0B1 /* QueContentVideoCell.swift in Sources */,
 				392C59632C248CDB004FA0B1 /* QueContentEssayCell.swift in Sources */,
 				3978D8053090F46B00CFFD02 /* UICollectionView+Extension.swift in Sources */,
@@ -401,6 +386,7 @@
 				3978D7FD3090F3EB00CFFD02 /* UIView+Extension.swift in Sources */,
 				392C59652C248CDB004FA0B1 /* QueContentFillBlankCell.swift in Sources */,
 				3978D7FF3090F40300CFFD02 /* UIColor+Extension.swift in Sources */,
+				3978D80D3093B0E500CFFD02 /* SelectFillBlankOptionCell.swift in Sources */,
 				392C596B2C248CDB004FA0B1 /* QueContentTitleCell.swift in Sources */,
 				392C596A2C248CDB004FA0B1 /* QueContentTableCell.swift in Sources */,
 				392C597A2C248E35004FA0B1 /* QuestionCategory.swift in Sources */,

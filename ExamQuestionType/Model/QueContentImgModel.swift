@@ -58,22 +58,17 @@ extension QueContentImgModel {
         }
         
         static func load(html: String) -> [ImgModel]? {
-            guard let data = html.data(using: .utf8) else {
+            guard let document = try? HTMLDocument(html: html), let root = document.body ?? document.root else {
                 return nil
             }
-            let hpple = TFHpple(data: data, isXML: false)
-            guard let elements = hpple?.search(withXPathQuery: "//img") as? [TFHppleElement] else {
-                return nil
-            }
-            
             var ret: [ImgModel] = []
-            for element in elements {
-                if let src = element.object(forKey: "src"), let url = URL(string: src) {
+            for node in root.allMatchNode(tagName: "img") {
+                if let src = node.attribute(named: "src"), let url = URL(string: src) {
                     let model = ImgModel(src: url)
-                    if let width = element.object(forKey: "width") {
+                    if let width = node.attribute(named: "width") {
                         model.width = CGFloat(Float(width)!)
                     }
-                    if let height = element.object(forKey: "height") {
+                    if let height = node.attribute(named: "height") {
                         model.height = CGFloat(Float(height)!)
                     }
                     print("\(NSStringFromClass(Self.self)) \(#function) url: \(model.src) width: \(String(describing: model.width)) height: \(String(describing: model.height))")

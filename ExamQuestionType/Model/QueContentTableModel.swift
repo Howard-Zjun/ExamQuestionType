@@ -17,11 +17,11 @@ class QueContentTableModel: NSObject, QueContentModel {
     
     var estimatedHeight: CGFloat?
 
-    let tableModel: EQTableModel
+    let tableModel: TableModel
     
     weak var delegate: QueContentModelDelegate? {
         didSet {
-            for trModel in tableModel.expansionTrModelArr {
+            for trModel in tableModel.expansionTrModels {
                 trModel.updateBlock = { [weak self] in
                     guard let self = self else { return }
                     delegate?.contentDidChange(model: self)
@@ -31,12 +31,12 @@ class QueContentTableModel: NSObject, QueContentModel {
     }
     
     init?(question: QuestionNode, node: HTMLNode, isResult: Bool = false) {
-        guard let tableModel = EQTableModel(node: node, question: question, isResult: isResult) else {
+        guard let tableModel = TableModel(node: node, question: question, isResult: isResult) else {
             return nil
         }
         tableModel.adjustSize(contentWidth: kScreenWidth - contentInset.left - contentInset.right)
         self.tableModel = tableModel
-        if let last = tableModel.expansionTrModelArr.last {
+        if let last = tableModel.expansionTrModels.last {
             self.estimatedHeight = last.y + last.height
         } else {
             self.estimatedHeight = CGFloat(tableModel.rowCount) * 55
@@ -58,13 +58,15 @@ class QueContentTableModel: NSObject, QueContentModel {
     }
 }
 
-class EQTableModel: NSObject {
+class TableModel: NSObject {
     
-    let theadModel: EQTableHeadModel?
+    let theadModel: TableHeadModel?
     
-    let trModelArr: [EQTableTrModel]
+    let trModels: [TableTrModel]
     
-    let expansionTrModelArr: [EQTableTdModel]
+    var expansionTrModels: [TableTdModel] {
+        trModels.flatMap { $0.tdModelArr }
+    }
     
     var maxColCount: Int
 
@@ -72,18 +74,18 @@ class EQTableModel: NSObject {
     
     init?(node: HTMLNode, question: QuestionNode, isResult: Bool) {
         guard node.kind == .element, node.name == "table" else { return nil }
-        var theadModel: EQTableHeadModel?
-        var trModelArr: [EQTableTrModel] = []
+        var theadModel: TableHeadModel?
+        var trModelArr: [TableTrModel] = []
         var fillBlankIndex = 0
 
         for child in node.children {
-            if let model = EQTableHeadModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+            if let model = TableHeadModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                 theadModel = model
-            } else if let model = EQTableTrModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+            } else if let model = TableTrModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                 trModelArr.append(model)
             } else if child.name == "tbody" || child.name == "tfoot" {
                 for row in child.children {
-                    if let model = EQTableTrModel(node: row, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                    if let model = TableTrModel(node: row, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                         trModelArr.append(model)
                     }
                 }
@@ -91,8 +93,7 @@ class EQTableModel: NSObject {
         }
         guard !trModelArr.isEmpty else { return nil }
         self.theadModel = theadModel
-        self.trModelArr = trModelArr
-        self.expansionTrModelArr = trModelArr.flatMap { $0.tdModelArr }
+        self.trModels = trModelArr
         self.maxColCount = 1
         self.rowCount = 1
 
@@ -104,7 +105,7 @@ class EQTableModel: NSObject {
         
         // 将单元所在位置修正，下面是数据都正确的处理逻辑，没有应对异常的处理
         
-        // 每一列的阻碍
+        // 每列剩余的占用行数；处理当前行时包含当前行，行末统一递减。
         var barrierArr: [Int] = .init(repeating: 0, count: maxColCount)
         
         for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModelArr).enumerated() {
@@ -114,38 +115,37 @@ class EQTableModel: NSObject {
                 let model = trModel.tdModelArr[left]
                 
                 var haveBarrier = false
-                // 之后看能不能优化
-                for index in 0..<model.widthNum {
+                // 查找期间只读取障碍，避免重复检查同一列时提前释放跨行占用。
+                for index in 0..<model.columnSpan {
                     if right + index >= barrierArr.count {
                         haveBarrier = true
                         break
                     }
                     if barrierArr[right + index] > 0 {
                         haveBarrier = true
-                        
-                        barrierArr[right + index] -= 1
                     }
                 }
                 
-                if haveBarrier { // 有障碍, 变更操作的下标，等下一次轮训处理
-                    right += model.widthNum
+                if haveBarrier { // 有障碍时，向后移动一列继续查找。
+                    right += 1
                 } else { // 没有障碍可以修正位置
-                    trModel.tdModelArr[left].yNum = trIndex + (theadModel?.trModelArr.count ?? 0)
-                    trModel.tdModelArr[left].xNum = right
+                    trModel.tdModelArr[left].rowIndex = trIndex
+                    trModel.tdModelArr[left].columnIndex = right
                     
-                    // 将单元跨行填入障碍
-                    for index in 0..<model.widthNum {
+                    // 记录包含当前行的占用，行末与其他列一起递减。
+                    for index in 0..<model.columnSpan {
                         if right + index >= barrierArr.count {
                             break
                         }
-                        barrierArr[right + index] = model.heightNum - 1
+                        barrierArr[right + index] = model.rowSpan
                     }
                     left += 1
                     
-                    right += 1
+                    right += model.columnSpan
                 }
             }
-            print(trModel.tdModelArr.map({"xNum: \($0.xNum) yNum: \($0.yNum) widthNum: \($0.widthNum) heightNum: \($0.heightNum)"}))
+            barrierArr = barrierArr.map { max(0, $0 - 1) }
+            print(trModel.tdModelArr.map({"xNum: \($0.columnIndex) yNum: \($0.rowIndex) widthNum: \($0.columnSpan) heightNum: \($0.rowSpan)"}))
             print("------")
         }
     }
@@ -161,7 +161,7 @@ class EQTableModel: NSObject {
                 }
             }
         }
-        for _ in trModelArr {
+        for _ in trModels {
             rowCount += 1
         }
         print("\(NSStringFromClass(Self.self)) \(#function) 最大行数: \(rowCount)")
@@ -173,12 +173,12 @@ class EQTableModel: NSObject {
         var maxColCount = 0
         // 计算每一行的最多列
         var maxColArr: [Int] = .init(repeating: 0, count: rowCount)
-        for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModelArr).enumerated() {
+        for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModels).enumerated() {
             
             // 处理每行里的跨列，填充跨行后，行的宽度
             for tdModel in trModel.tdModelArr {
-                for i in 0..<tdModel.heightNum {
-                    maxColArr[trIndex + i] += tdModel.widthNum
+                for i in 0..<tdModel.rowSpan {
+                    maxColArr[trIndex + i] += tdModel.columnSpan
                 }
             }
             
@@ -191,25 +191,25 @@ class EQTableModel: NSObject {
     
     /// 单元大小适应
     func adjustSize(contentWidth: CGFloat) {
-        var arr: [[EQTableTdModel]] = .init(repeating: [], count: rowCount)
+        var arr: [[TableTdModel]] = .init(repeating: [], count: rowCount)
         
-        for trModel in (theadModel?.trModelArr ?? []) + trModelArr {
+        for trModel in (theadModel?.trModelArr ?? []) + trModels {
             for tdModel in trModel.tdModelArr {
-                arr[tdModel.yNum + tdModel.heightNum - 1].append(tdModel)
+                arr[tdModel.rowIndex + tdModel.rowSpan - 1].append(tdModel)
             }
         }
         
         var maxY: CGFloat = 0
         let colSpan = floor(contentWidth / CGFloat(maxColCount))
-        for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModelArr).enumerated() {
+        for (trIndex, trModel) in ((theadModel?.trModelArr ?? []) + trModels).enumerated() {
             var maxContentHeight: CGFloat = 0
             for tdModel in trModel.tdModelArr {
-                tdModel.x = CGFloat(tdModel.xNum) * colSpan
+                tdModel.x = CGFloat(tdModel.columnIndex) * colSpan
                 tdModel.y = maxY
                 if tdModel.isLast {
                     tdModel.width = contentWidth - tdModel.x
                 } else {
-                    tdModel.width = CGFloat(tdModel.widthNum) * colSpan
+                    tdModel.width = CGFloat(tdModel.columnSpan) * colSpan
                 }
                 maxContentHeight = max(maxContentHeight, tdModel.resultAttributed.textHeight(textWidth: tdModel.width) + 20)
             }
@@ -223,20 +223,20 @@ class EQTableModel: NSObject {
     }
 }
 
-class EQTableHeadModel: NSObject {
+class TableHeadModel: NSObject {
 
-    let trModelArr: [EQTableTrModel]
+    let trModelArr: [TableTrModel]
     
     init?(node: HTMLNode, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
         if node.kind != .element || node.name != "thead" {
             return nil
         }
-        var trModelArr: [EQTableTrModel] = []
+        var trModelArr: [TableTrModel] = []
         for child in node.children {
             if child.name != "tr" {
                 continue
             }
-            if let model = EQTableTrModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+            if let model = TableTrModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                 trModelArr.append(model)
             }
         }
@@ -247,19 +247,19 @@ class EQTableHeadModel: NSObject {
     }
 }
 
-class EQTableTrModel: NSObject {
+class TableTrModel: NSObject {
 
     
-    let tdModelArr: [EQTableTdModel]
+    let tdModelArr: [TableTdModel]
     
     init?(node: HTMLNode, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
         if node.kind != .element || node.name != "tr" {
             return nil
         }
-        var tdModelArr: [EQTableTdModel] = []
+        var tdModelArr: [TableTdModel] = []
         for child in node.children {
             if child.name == "td" {
-                if let model = EQTableTdModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                if let model = TableTdModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                     tdModelArr.append(model)
                 }
             }
@@ -301,17 +301,17 @@ class EQTableConfig: NSObject {
     static let headConfig: EQTableConfig = .init(fontSize: 18)
 }
 
-class EQTableTdModel: NSObject {
+class TableTdModel: NSObject {
     
-    // MARK: - 比例系数
-    var xNum: Int = 0
+    /// 根据跨行跨列调整后，合适的起始单元
+    var columnIndex: Int = 0
     
-    var yNum: Int = 0
+    var rowIndex: Int = 0
     
     // 跨列
-    var widthNum: Int
+    var columnSpan: Int
     // 跨行
-    var heightNum: Int
+    var rowSpan: Int
     
     // MARK: - 计算的实际位置
     var x: CGFloat = 0
@@ -379,8 +379,8 @@ class EQTableTdModel: NSObject {
         self.isResult = isResult
         self.fillBlankIndexOffset = fillBlankIndex
         // 从原始节点读取合并属性，未提供或无法转换时默认为 1。
-        self.heightNum = node.attribute(named: "rowspan").flatMap { Int($0) } ?? 1
-        self.widthNum = node.attribute(named: "colspan").flatMap { Int($0) } ?? 1
+        self.rowSpan = node.attribute(named: "rowspan").flatMap { Int($0) } ?? 1
+        self.columnSpan = node.attribute(named: "colspan").flatMap { Int($0) } ?? 1
         self.allAttrArr = []
         self.fillBlankAttrArr = []
         self.resultAttributed = .init()

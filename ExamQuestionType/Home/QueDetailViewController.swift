@@ -221,7 +221,7 @@ class QueDetailViewController: UIViewController {
             } else if let tableFillBlankModel = model as? QueContentTableModel {
                 let cell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentTableCell
 
-                for (trIndex, trModel) in tableFillBlankModel.tableModel.expansionTrModelArr.enumerated() {
+                for (trIndex, trModel) in tableFillBlankModel.tableModel.expansionTrModels.enumerated() {
                     trModel.focunsIndex = nil
                     
                     let trCell = cell?.collectionView.cellForItem(at: .init(item: trIndex, section: 0)) as? QueContentTableCell.QCTCell
@@ -367,12 +367,12 @@ extension QueDetailViewController: QueContentModelDelegate {
                 
                 let tableCell = tableView.cellForRow(at: .init(row: index, section: 0)) as? QueContentTableCell
                 
-                for (tdIndex, tdModel) in obj2.tableModel.expansionTrModelArr.enumerated() {
+                for (tdIndex, tdModel) in obj2.tableModel.expansionTrModels.enumerated() {
                     let tdCell = tableCell?.collectionView.cellForItem(at: .init(item: tdIndex, section: 0)) as? QueContentTableCell.QCTCell
                     tdCell?.tdModel = tdModel
                 }
                 tableCell?.collectionView.snp.updateConstraints({ make in
-                    if let last = obj2.tableModel.expansionTrModelArr.last {
+                    if let last = obj2.tableModel.expansionTrModels.last {
                         make.height.equalTo(ceil(last.y + last.height))
                     } else {
                         make.height.equalTo(obj2.tableModel.rowCount * 55)

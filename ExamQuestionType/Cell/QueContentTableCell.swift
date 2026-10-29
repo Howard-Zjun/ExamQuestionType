@@ -19,7 +19,7 @@ class QueContentTableCell: UITableViewCell {
                 
                 if let estimatedHeight = model.estimatedHeight {
                     make.height.equalTo(estimatedHeight)
-                } else if let last = model.tableModel.expansionTrModelArr.last {
+                } else if let last = model.tableModel.expansionTrModels.last {
                     make.height.equalTo(ceil(last.y + last.height))
                 } else {
                     make.height.equalTo(model.tableModel.rowCount * 55)
@@ -74,23 +74,23 @@ extension QueContentTableCell: UICollectionViewDelegateFlowLayout, UICollectionV
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        model.tableModel.expansionTrModelArr.count
+        model.tableModel.expansionTrModels.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NSStringFromClass(QCTCell.self), for: indexPath) as! QCTCell
-        cell.tdModel = model.tableModel.expansionTrModelArr[indexPath.item]
+        cell.tdModel = model.tableModel.expansionTrModels[indexPath.item]
         cell.indexPath = indexPath
         cell.actionDidChange = { [weak self] position, indexPath in
             guard let self = self else { return }
-            for (index, model) in model.tableModel.expansionTrModelArr.enumerated() {
+            for (index, model) in model.tableModel.expansionTrModels.enumerated() {
                 if indexPath.item == index {
                     model.focunsIndex = position - model.fillBlankIndexOffset
                 } else {
                     model.focunsIndex = nil
                 }
             }
-            for (index, model) in model.tableModel.expansionTrModelArr.enumerated() {
+            for (index, model) in model.tableModel.expansionTrModels.enumerated() {
                 let cell = collectionView.cellForItem(at: .init(item: index, section: 0)) as? QCTCell
                 cell?.tdModel = model
             }
@@ -98,7 +98,7 @@ extension QueContentTableCell: UICollectionViewDelegateFlowLayout, UICollectionV
         cell.contentDidChange = { [weak self] indexPath in
             guard let self = self else { return }
             model.tableModel.adjustSize(contentWidth: kScreenWidth - model.contentInset.left - model.contentInset.right)
-            for (index, model) in model.tableModel.expansionTrModelArr.enumerated() {
+            for (index, model) in model.tableModel.expansionTrModels.enumerated() {
                 let cell = collectionView.cellForItem(at: .init(item: index, section: 0)) as? QCTCell
                 cell?.frame = .init(x: model.x, y: model.y, width: model.width, height: model.height)
                 print("\(NSStringFromClass(Self.self)) \(#function) index: \(index) width: \(model.width) height: \(model.height)")
@@ -106,7 +106,7 @@ extension QueContentTableCell: UICollectionViewDelegateFlowLayout, UICollectionV
             }
             collectionView.snp.updateConstraints { [weak self] make in
                 guard let self = self else { return }
-                if let last = model.tableModel.expansionTrModelArr.last {
+                if let last = model.tableModel.expansionTrModels.last {
                     make.height.equalTo(ceil(last.y + last.height))
                 } else {
                     make.height.equalTo(model.tableModel.rowCount * 55)
@@ -121,8 +121,8 @@ extension QueContentTableCell: UICollectionViewDelegateFlowLayout, UICollectionV
 // MARK: - TableCollectionViewFlowLayoutDeleagte
 extension QueContentTableCell: TableCollectionViewFlowLayoutDeleagte {
     
-    func model(indexPath: IndexPath) -> EQTableTdModel {
-        model.tableModel.expansionTrModelArr[indexPath.item]
+    func model(indexPath: IndexPath) -> TableTdModel {
+        model.tableModel.expansionTrModels[indexPath.item]
     }
 }
 
@@ -136,7 +136,7 @@ extension QueContentTableCell {
         
         var indexPath: IndexPath!
         
-        var tdModel: EQTableTdModel! {
+        var tdModel: TableTdModel! {
             didSet {
                 layer.borderColor = tdModel.configModel.boardColor.cgColor
                 layer.borderWidth = tdModel.configModel.boardWidth
@@ -226,7 +226,7 @@ extension QueContentTableCell {
 // MARK: - TableCollectionViewFlowLayoutDeleagte
 protocol TableCollectionViewFlowLayoutDeleagte {
     
-    func model(indexPath: IndexPath) -> EQTableTdModel
+    func model(indexPath: IndexPath) -> TableTdModel
 }
 
 // MARK: - TableCollectionViewFlowLayout

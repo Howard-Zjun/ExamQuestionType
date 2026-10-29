@@ -36,44 +36,42 @@ class QueContentDescribeModel: NSObject, QueContentModel {
     }
     
     convenience init?(html: String, fontSize: CGFloat = 18, baselineOffset: Int = 5, needStyle: Bool = true) {
-        guard let data = html.data(using: .utf8) else {
+        guard let document = try? HTMLDocument(html: html),
+              let root = document.body ?? document.root else {
             return nil
         }
         let style = NSMutableParagraphStyle()
         style.lineSpacing = 5
         style.paragraphSpacing = 5
                 
-        let hpple = TFHpple(data: data, isXML: false)
-        if let elements = hpple?.search(withXPathQuery: "//p") as? [TFHppleElement], !elements.isEmpty {
+        let elements = root.allMatchNode(tagName: "p")
+        if !elements.isEmpty {
             let handleContentAttr = NSMutableAttributedString()
             
             for (elementIndex, element) in elements.enumerated() {
                 var pStyle: NSMutableParagraphStyle = style
-                if let align = element.attributes["align"] as? String {
+                if let align = element.attribute(named: "align") {
                     pStyle = .init()
                     pStyle.lineSpacing = 5
                     pStyle.paragraphSpacing = 5
                     if align.lowercased() == "right" {
                         pStyle.alignment = .right
                     } else if align.lowercased() == "left" {
-                        pStyle.alignment = .right
+                        pStyle.alignment = .left
                     } else if align.lowercased() == "center" {
                         pStyle.alignment = .center
                     }
                 }
-                // 去掉<p></p>
-                if let raw = element.raw {
-                    let firstPEnd = (element.raw as NSString).range(of: ">").location + 1
-                    let content = (element.raw as NSString).substring(with: .init(location: firstPEnd, length: raw.count - firstPEnd - 4))
-                    let tempAttr = NSMutableAttributedString(string: content)
-                    if needStyle {
-                        tempAttr.addAttribute(.paragraphStyle, value: pStyle, range: .init(location: 0, length: tempAttr.length))
-                    }
-                    handleContentAttr.append(tempAttr)
-                    
-                    if elementIndex < elements.count - 1 {
-                        handleContentAttr.append(.init(string: "\n"))
-                    }
+                // 按原顺序序列化段落的子节点，保留内联标签供后续富文本转换。
+                let content = element.children.compactMap { $0.outerHTML }.joined()
+                let tempAttr = NSMutableAttributedString(string: content)
+                if needStyle {
+                    tempAttr.addAttribute(.paragraphStyle, value: pStyle, range: .init(location: 0, length: tempAttr.length))
+                }
+                handleContentAttr.append(tempAttr)
+
+                if elementIndex < elements.count - 1 {
+                    handleContentAttr.append(.init(string: "\n"))
                 }
             }
             handleContentAttr.handle(fontSize: fontSize, baselineOffset: baselineOffset)
