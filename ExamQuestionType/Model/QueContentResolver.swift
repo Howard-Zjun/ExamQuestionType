@@ -122,9 +122,8 @@ class QueContentResolver {
                 }
                 appendText("\n", tags: [], alignment: paragraphAlignment)
             case "table":
-                // 表格交给现有模型整体处理，不重复展开内部节点。
-                if let html = node.outerHTML,
-                   let model = QueContentTableModel(question: question, html: html, isResult: isResult) {
+                // 直接传递原始节点，复用已解析的表格子树。
+                if let model = QueContentTableModel(question: question, node: node, isResult: isResult) {
                     models.append(model)
                 }
             case "img":

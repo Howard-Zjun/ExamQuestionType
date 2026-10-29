@@ -30,8 +30,8 @@ class QueContentTableModel: NSObject, QueContentModel {
         }
     }
     
-    init?(question: QuestionNode, html: String, isResult: Bool = false) {
-        guard let tableModel = EQTableModel(html: html, question: question, isResult: isResult) else {
+    init?(question: QuestionNode, node: HTMLNode, isResult: Bool = false) {
+        guard let tableModel = EQTableModel(node: node, question: question, isResult: isResult) else {
             return nil
         }
         tableModel.adjustSize(contentWidth: kScreenWidth - contentInset.left - contentInset.right)
@@ -43,6 +43,13 @@ class QueContentTableModel: NSObject, QueContentModel {
         }
     }
     
+    /// 兼容仍传入 HTML 的填空入口；已有节点时应直接使用 node 初始化，避免重复解析。
+    convenience init?(question: QuestionNode, html: String, isResult: Bool = false) {
+        guard let document = try? HTMLDocument(html: html),
+              let node = document.firstElement(named: "table") else { return nil }
+        self.init(question: question, node: node, isResult: isResult)
+    }
+
     convenience init?(question: QuestionNode, isResult: Bool = false) {
         guard let content = question.content else {
             return nil
@@ -63,40 +70,32 @@ class EQTableModel: NSObject {
 
     var rowCount: Int
     
-    init?(html: String, question: QuestionNode, isResult: Bool) {
-        if let data = html.data(using: .utf8) {
-            var theadModel: EQTableHeadModel?
-            var trModelArr: [EQTableTrModel] = []
+    init?(node: HTMLNode, question: QuestionNode, isResult: Bool) {
+        guard node.kind == .element, node.name == "table" else { return nil }
+        var theadModel: EQTableHeadModel?
+        var trModelArr: [EQTableTrModel] = []
+        var fillBlankIndex = 0
 
-            var fillBlankIndex = 0
-            let hpple = TFHpple(data: data, isXML: false)
-            let arr = (hpple?.search(withXPathQuery: "//table") as? [TFHppleElement])?.first?.children as? [TFHppleElement]
-            for item in arr ?? [] {
-                if let model = EQTableHeadModel(element: item, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
-                    theadModel = model
-                } else if let model = EQTableTrModel(element: item, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
-                    trModelArr.append(model)
-                } else {
-                    let itemChildren = item.children as? [TFHppleElement]
-                    for child in itemChildren ?? [] {
-                        if let model = EQTableTrModel(element: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
-                            trModelArr.append(model)
-                        }
+        for child in node.children {
+            if let model = EQTableHeadModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                theadModel = model
+            } else if let model = EQTableTrModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                trModelArr.append(model)
+            } else if child.name == "tbody" || child.name == "tfoot" {
+                for row in child.children {
+                    if let model = EQTableTrModel(node: row, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+                        trModelArr.append(model)
                     }
                 }
             }
-            if trModelArr.isEmpty {
-                return nil
-            }
-            self.theadModel = theadModel
-            self.trModelArr = trModelArr
-            self.expansionTrModelArr = trModelArr.flatMap({$0.tdModelArr})
-            self.maxColCount = 1
-            self.rowCount = 1
-        } else {
-            return nil
         }
-        
+        guard !trModelArr.isEmpty else { return nil }
+        self.theadModel = theadModel
+        self.trModelArr = trModelArr
+        self.expansionTrModelArr = trModelArr.flatMap { $0.tdModelArr }
+        self.maxColCount = 1
+        self.rowCount = 1
+
         super.init()
 
         calMaxRowCount()
@@ -228,16 +227,16 @@ class EQTableHeadModel: NSObject {
 
     let trModelArr: [EQTableTrModel]
     
-    init?(element: TFHppleElement, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
-        if element.tagName != "thead" {
+    init?(node: HTMLNode, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
+        if node.kind != .element || node.name != "thead" {
             return nil
         }
         var trModelArr: [EQTableTrModel] = []
-        for itemElement in (element.children as? [TFHppleElement]) ?? [] {
-            if itemElement.tagName != "tr" {
+        for child in node.children {
+            if child.name != "tr" {
                 continue
             }
-            if let model = EQTableTrModel(element: itemElement, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+            if let model = EQTableTrModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                 trModelArr.append(model)
             }
         }
@@ -253,14 +252,14 @@ class EQTableTrModel: NSObject {
     
     let tdModelArr: [EQTableTdModel]
     
-    init?(element: TFHppleElement, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
-        if element.tagName != "tr" {
+    init?(node: HTMLNode, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
+        if node.kind != .element || node.name != "tr" {
             return nil
         }
         var tdModelArr: [EQTableTdModel] = []
-        for itemElement in (element.children as? [TFHppleElement]) ?? [] {
-            if itemElement.tagName == "td" {
-                if let model = EQTableTdModel(element: itemElement, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
+        for child in node.children {
+            if child.name == "td" {
+                if let model = EQTableTdModel(node: child, question: question, fillBlankIndex: &fillBlankIndex, isResult: isResult) {
                     tdModelArr.append(model)
                 }
             }
@@ -372,66 +371,35 @@ class EQTableTdModel: NSObject {
     
     var updateBlock: (() -> Void)?
     
-    let regexPression = "(<blk.*?</blk>)|(<blk.*?/>)|(<p.*?</p>)"
-    
-    init?(element: TFHppleElement, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
-        if element.tagName != "td" {
+    init?(node: HTMLNode, question: QuestionNode, fillBlankIndex: inout Int, isResult: Bool) {
+        if node.kind != .element || node.name != "td" {
             return nil
         }
         self.question = question
         self.isResult = isResult
         self.fillBlankIndexOffset = fillBlankIndex
-        // 跨行
-        var heightNum = element.attributes["rowspan"] as? Int
-        if heightNum == nil, let str = element.attributes["rowspan"] as? String {
-            heightNum = Int(str)
-        }
-        if let heightNum = heightNum {
-            self.heightNum = heightNum
-        } else {
-            self.heightNum = 1
-        }
-        
-        // 跨列
-        var widthNum = element.attributes["colspan"] as? Int
-        if widthNum == nil, let str = element.attributes["colspan"] as? String {
-            widthNum = Int(str)
-        }
-        if let widthNum = widthNum {
-            self.widthNum = widthNum
-        } else {
-            self.widthNum = 1
-        }
+        // 从原始节点读取合并属性，未提供或无法转换时默认为 1。
+        self.heightNum = node.attribute(named: "rowspan").flatMap { Int($0) } ?? 1
+        self.widthNum = node.attribute(named: "colspan").flatMap { Int($0) } ?? 1
         self.allAttrArr = []
         self.fillBlankAttrArr = []
         self.resultAttributed = .init()
         super.init()
         
-        let firstEnd = (element.raw as NSString).range(of: ">").location + 1
-        let html: String
-        if firstEnd >= element.raw.count { // 为 <td/> 标签
-            html = ""
-        } else {
-            html = (element.raw as NSString).substring(with: .init(location: firstEnd, length: element.raw.count - firstEnd - 5))
-        }
         var userAnswers: [String] = []
         if question.isNormal {
             userAnswers = question.userAnswers
         } else {
             userAnswers = question.subquestions?.map({ $0.userAnswers.first ?? "" }) ?? []
         }
-        if isResult {
-            var correctAnswers: [String]?
-            if question.isNormal {
-                correctAnswers = question.correctAnswers
-            } else {
-                correctAnswers = question.subquestions?.flatMap({ $0.correctAnswers ?? [] })
-            }
-            resolverResult(html: html, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers ?? [])
+        let correctAnswers: [String]
+        if question.isNormal {
+            correctAnswers = question.correctAnswers ?? []
         } else {
-            resolver(html: html, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers)
+            correctAnswers = question.subquestions?.flatMap { $0.correctAnswers ?? [] } ?? []
         }
-        
+        resolve(node, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers)
+
         // 去掉末尾换行
         while let last = allAttrArr.last, last.string.hasSuffix("\n") {
             last.replaceCharacters(in: .init(location: last.length - 1, length: 1), with: "")
@@ -523,45 +491,65 @@ class EQTableTdModel: NSObject {
     }
     
     // MARK: - resolver
-    func resolver(html: String, fillBlankIndex: inout Int, userAnswers: [String]) {
-        let pRegex = try! NSRegularExpression(pattern: regexPression)
-        
-        var lastIndex = 0
-        
-        pRegex.enumerateMatches(in: html, range: .init(location: 0, length: html.count)) { match, _, _ in
-            guard let range = match?.range else { return }
-            
-            if range.location != lastIndex { // 有未识别内容
-                let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
-            
-                allAttrArr.append(noHandleStr.handle(fontSize: configModel.fontSize, baselineOffset: configModel.baselineOffset))
-            }
-            let tempStr = (html as NSString).substring(with: range)
-            if tempStr.hasPrefix("<p") {
-                let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
-                let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
-                resolver(html: content, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers)
-                allAttrArr.append(.init(string: "\n", attributes: [
-                    .font : UIFont.systemFont(ofSize: configModel.fontSize),
-                ]))
-            } else if tempStr.hasPrefix("<blk") {
-                resolverBLK(fillBlankIndex: fillBlankIndex, userAnswers: userAnswers)
-                
-                fillBlankIndex += 1
-            } else if tempStr.hasPrefix("<img") {
-                resolverIMG(content: tempStr)
-            }
-            
-            lastIndex = range.location + range.length
+    private func appendText(_ text: String, tags: [String]) {
+        guard !text.isEmpty else { return }
+        var attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: configModel.fontSize),
+            .baselineOffset: NSNumber(value: configModel.baselineOffset)
+        ]
+        if tags.contains("u") {
+            attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue
+            attributes[.underlineColor] = UIColor.black
         }
-        
-        if lastIndex < html.count { // 后面有未识别的内容
-            let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
-            
-            allAttrArr.append(noHandleStr.handle(fontSize: configModel.fontSize, baselineOffset: configModel.baselineOffset))
+        if tags.contains("i") || tags.contains("em") {
+            attributes[.obliqueness] = NSNumber(value: 0.5)
+        }
+        if tags.contains("b") || tags.contains("strong") {
+            attributes[.font] = UIFont.systemFont(ofSize: configModel.fontSize, weight: .bold)
+        }
+        if tags.contains("sup") {
+            attributes[.font] = UIFont.systemFont(ofSize: configModel.fontSize * 0.5)
+            attributes[.baselineOffset] = NSNumber(value: configModel.baselineOffset + Int(ceil(configModel.fontSize * 1.5)))
+        }
+        if tags.contains("sub") {
+            attributes[.font] = UIFont.systemFont(ofSize: configModel.fontSize * 0.5)
+        }
+        allAttrArr.append(NSMutableAttributedString(string: text, attributes: attributes))
+    }
+
+    /// 同一棵单元格子树同时支持作答与结果模式，所有空位共用外部传入的全局索引。
+    private func resolve(_ node: HTMLNode, fillBlankIndex: inout Int, userAnswers: [String], correctAnswers: [String], tags: [String] = []) {
+        if node.kind == .text || node.kind == .cdata {
+            appendText(node.text ?? "", tags: tags)
+            return
+        }
+        guard node.kind == .element else { return }
+        switch node.name {
+        case "blk":
+            if isResult {
+                resolverResultBLK(fillBlankIndex: fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers)
+            } else {
+                resolverBLK(fillBlankIndex: fillBlankIndex, userAnswers: userAnswers)
+            }
+            fillBlankIndex += 1
+        case "img":
+            resolverIMG(node: node)
+        case "br":
+            appendText("\n", tags: tags)
+        case "head", "script", "style":
+            break
+        default:
+            let inlineTags: Set<String> = ["b", "strong", "i", "em", "u", "a", "sup", "sub"]
+            let childTags = node.name.flatMap { inlineTags.contains($0) ? tags + [$0] : nil } ?? tags
+            for child in node.children {
+                resolve(child, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers, tags: childTags)
+            }
+            if node.name == "p" {
+                appendText("\n", tags: [])
+            }
         }
     }
-    
+
     func resolverBLK(fillBlankIndex: Int, userAnswers: [String]) {
         var enterStr = spaceStr
         var haveAnswer = false
@@ -580,79 +568,30 @@ class EQTableTdModel: NSObject {
         allAttrArr.append(fillBlankAttrStr)
     }
     
-    func resolverIMG(content: String) {
-        if let imgModels = QueContentImgModel.ImgModel.load(html: content) {
-            for imgModel in imgModels {
-                
-                allAttrArr.append(.init(string: "\n", attributes: [
-                    .font : UIFont.systemFont(ofSize: configModel.fontSize),
-                ]))
-                
-                allAttrArr.append(.init()) // 占位
-                let index = allAttrArr.count - 1
-                
-                SDWebImageManager.shared.loadImage(with: imgModel.src, progress: nil) { [weak self] img, data, _, _, _, url in
-                    print("\(NSStringFromClass(Self.self)) \(#function) 线程: \(Thread.current) 图片链接: \(String(describing: url)) 替换下标: \(index)")
-                    guard let self = self, let img = img else { return }
-                    let attachment = NSTextAttachment(image: img)
-                    var width = imgModel.width ?? img.size.width
-                    var height = imgModel.height ?? img.size.height
-                    if width > kScreenWidth - 40 {
-                        height = (kScreenWidth - 40) / width * height
-                        width = kScreenWidth - 40
-                    }
-                    attachment.bounds = .init(x: 0, y: 0, width: width, height: height)
-                    
-                    let imgAttr = NSMutableAttributedString(attachment: attachment)
-                    
-                    allAttrArr[index] = imgAttr
-                    makeResultAttr()
-                    
-                    updateBlock?()
-                }
+    private func resolverIMG(node: HTMLNode) {
+        guard let src = node.attribute(named: "src"), let url = URL(string: src) else { return }
+        let imageWidth = node.attribute(named: "width").flatMap { Float($0) }.map { CGFloat($0) }
+        let imageHeight = node.attribute(named: "height").flatMap { Float($0) }.map { CGFloat($0) }
+        appendText("\n", tags: [])
+        allAttrArr.append(.init()) // 保留图片的位置，异步加载后替换。
+        let index = allAttrArr.count - 1
+
+        SDWebImageManager.shared.loadImage(with: url, progress: nil) { [weak self] image, _, _, _, _, _ in
+            guard let self = self, let image = image else { return }
+            let attachment = NSTextAttachment(image: image)
+            var width = imageWidth ?? image.size.width
+            var height = imageHeight ?? image.size.height
+            if width > kScreenWidth - 40 {
+                height = (kScreenWidth - 40) / width * height
+                width = kScreenWidth - 40
             }
+            attachment.bounds = .init(x: 0, y: 0, width: width, height: height)
+            allAttrArr[index] = NSMutableAttributedString(attachment: attachment)
+            makeResultAttr()
+            updateBlock?()
         }
     }
-    
-    func resolverResult(html: String, fillBlankIndex: inout Int, userAnswers: [String], correctAnswers: [String]) {
-        let pRegex = try! NSRegularExpression(pattern: regexPression)
-        
-        var lastIndex = 0
-        
-        pRegex.enumerateMatches(in: html, range: .init(location: 0, length: html.count)) { match, _, _ in
-            guard let range = match?.range else { return }
-            
-            if range.location != lastIndex { // 有未识别内容
-                let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: range.location - lastIndex))
-            
-                allAttrArr.append(noHandleStr.handle(fontSize: configModel.fontSize, baselineOffset: configModel.baselineOffset))
-            }
-            let tempStr = (html as NSString).substring(with: range)
-            if tempStr.hasPrefix("<p") {
-                let firstPEnd = (tempStr as NSString).range(of: ">").location + 1
-                let content = (tempStr as NSString).substring(with: .init(location: firstPEnd, length: tempStr.count - firstPEnd - 4)) // 去掉<p></p>
-                resolverResult(html: content, fillBlankIndex: &fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers)
-                allAttrArr.append(.init(string: "\n", attributes: [
-                    .font : UIFont.systemFont(ofSize: configModel.fontSize),
-                ]))
-            } else if tempStr.hasPrefix("<blk") {
-                resolverResultBLK(fillBlankIndex: fillBlankIndex, userAnswers: userAnswers, correctAnswers: correctAnswers)
-                
-                fillBlankIndex += 1
-            } else if tempStr.hasPrefix("<img") {
-                resolverIMG(content: tempStr)
-            }
-            
-            lastIndex = range.location + range.length
-        }
-        
-        if lastIndex < html.count { // 后面有未识别的内容
-            let noHandleStr = (html as NSString).substring(with: .init(location: lastIndex, length: html.count - lastIndex))
-            
-            allAttrArr.append(noHandleStr.handle(fontSize: configModel.fontSize, baselineOffset: configModel.baselineOffset))
-        }
-    }
-    
+
     func resolverResultBLK(fillBlankIndex: Int, userAnswers: [String], correctAnswers: [String]) {
         var enterStr = spaceStr
         var haveAnswer = false
